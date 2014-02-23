@@ -52,12 +52,10 @@ import android.widget.Toast;
 	private int[] fShaders;
 
 	// object constants
-	private final int OCTAHEDRON = 0;
-	private final int TETRAHEDRON = 1;
-	private final int CUBE = 2;
+	private final int CUBE = 0;
 
 	// The objects
-	Object3D[] _objects = new Object3D[3];
+	Object3D[] _objects = new Object3D[1];
 
 	// current object
 	private int _currentObject;
@@ -127,20 +125,22 @@ import android.widget.Toast;
 		// normal mapping
 		vShaders[NORMALMAP_SHADER] = R.raw.normalmap_vs;
 		fShaders[NORMALMAP_SHADER] = R.raw.normalmap_ps;
+		
 
 		// Create some objects - pass in the textures, the meshes
 		try {
-			int[] normalMapTextures = {R.raw.diffuse_old, R.raw.diffusenormalmap_deepbig};
-			_objects[0] = new Object3D(R.raw.octahedron, false, context);
-			_objects[1] = new Object3D(R.raw.tetrahedron, false, context);
-			_objects[2] = new Object3D(normalMapTextures, R.raw.texturedcube, true, context);
+			int[] normalMapTextures = {R.raw.diffuse_old, R.raw.sphere};
+			_objects[0] = new Object3D(normalMapTextures, R.raw.texturedcube, false, context);
 		} catch (Exception e) {
 			//showAlert("" + e.getMessage());
 		}
 
 		// set current object and shader
-		_currentObject = this.OCTAHEDRON;
 		_currentShader = this.GOURAUD_SHADER;
+		
+		_currentObject = this.CUBE;
+		flipTexturing();
+		
 	}
 
 	/*****************************
@@ -226,9 +226,8 @@ import android.widget.Toast;
 		Mesh mesh = ob.getMesh();
 		FloatBuffer _vb = mesh.get_vb();
 		ShortBuffer _ib = mesh.get_ib();
-		
 		short[] _indices = mesh.get_indices();
-
+		
 		// Vertex buffer
 
 		// the vertex coordinates
@@ -242,6 +241,7 @@ import android.widget.Toast;
 		GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
 		GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
+		
 
 		// Texture info
 
@@ -252,11 +252,12 @@ import android.widget.Toast;
 			
 			for(int i = 0; i < _texIDs.length; i++) {
 				GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + i);
-				Log.d("TEXTURE BIND: ", i + " " + texIDs[i]);
+				//Log.d("TEXTURE BIND: ", i + " " + texIDs[i]);
 				GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texIDs[i]);
 				GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "texture" + (i+1)), i);
 			}
-		}
+		} 
+		
 
 		// enable texturing? [fix - sending float is waste]
 		GLES20.glUniform1f(GLES20.glGetUniformLocation(_program, "hasTexture")/*shader.hasTextureHandle*/, ob.hasTexture() && enableTexture ? 2.0f : 0.0f);
@@ -269,6 +270,8 @@ import android.widget.Toast;
 		
 		// Draw with indices
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, _indices.length, GLES20.GL_UNSIGNED_SHORT, _ib);
+		
+		
 		
 		checkGlError("glDrawElements");
 

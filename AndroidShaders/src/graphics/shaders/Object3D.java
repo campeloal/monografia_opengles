@@ -33,7 +33,7 @@ public class Object3D {
 
 		// the mesh
 		mesh = new Mesh(meshID, context);
-
+													
 		// texture
 		_texIDs = new int[texFiles.length];
 	} 

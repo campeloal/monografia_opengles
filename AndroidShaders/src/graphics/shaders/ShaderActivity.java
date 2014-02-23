@@ -86,12 +86,6 @@ public class ShaderActivity extends Activity {
 		case R.id.cube:				// Cube
 			renderer.setObject(this.CUBE);
 			return true;
-		case R.id.octahedron:		// Octahedron
-			renderer.setObject(this.OCTAHEDRON);
-			return true;
-		case R.id.tetrahedron:		// Tetrahedron
-			renderer.setObject(this.TETRAHEDRON);
-			return true;
 		case R.id.texture:			// Enable/disable texturing
 			renderer.flipTexturing();
 			return true;
@@ -189,8 +183,6 @@ public class ShaderActivity extends Activity {
 
 
 	// object constants
-	private final int OCTAHEDRON = 0;
-	private final int TETRAHEDRON = 1;
 	private final int CUBE = 2;
 
 	// touch events
