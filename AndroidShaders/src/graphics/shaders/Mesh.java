@@ -1,7 +1,6 @@
 package graphics.shaders;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
@@ -23,22 +22,10 @@ public class Mesh {
 	// Constants
 	private static final int FLOAT_SIZE_BYTES = 4;
 	private static final int SHORT_SIZE_BYTES = 2;
-	// the number of elements for each vertex
-	// [coordx, coordy, coordz, normalx, normaly, normalz....]
-	private final int VERTEX_ARRAY_SIZE = 8;
-	
-	// if tex coords exist
-	private final int VERTEX_TC_ARRAY_SIZE = 8;
 
 	// Vertices
 	private float _vertices[];
-
-	// Normals
-	private float _normals[];
-	
-	// Texture coordinates
-	private float _texCoords[];
-	
+		
 	// Indices
 	private short _indices[];	
 	
@@ -46,11 +33,6 @@ public class Mesh {
 	private FloatBuffer _vb;
 	private FloatBuffer _nb;
 	private ShortBuffer _ib;
-	private FloatBuffer _tcb;
-
-	// Normals
-	private float[] _faceNormals;
-	private int[]   _surroundingFaces; // # of surrounding faces for each vertex
 
 	// Store the context
 	Context activity; 
@@ -67,7 +49,9 @@ public class Mesh {
 	int numVertices = 0;
 	int numNormals = 0;
 	int numTexCoords = 0;
-
+	boolean hasTexture = false;
+	short index = 0;
+	
 	public Mesh() {
 
 	}
@@ -123,12 +107,8 @@ public class Mesh {
 			//Log.d("In OBJ:", "First");
 			/* read vertices first */
 			String str;
-			String fFace, sFace, tFace;
 			mainBuffer = new ArrayList<Float>(numVertices * 6);
 			indicesB = new ArrayList<Short>(numVertices * 3);
-			StringTokenizer lt, ft; // the face tokenizer
-			int numFaces = 0;
-			short index = 0;
 			
 			while((str = in.readLine()) != null)
 			{
@@ -145,6 +125,8 @@ public class Mesh {
 				
 				if (type.equals("vt")) 
 				{						
+					if(!hasTexture)
+						hasTexture = true;
 					tc.add(Float.parseFloat(t.nextToken())); 	// u
 					tc.add(Float.parseFloat(t.nextToken()));	// v
 					numTexCoords++;
@@ -163,19 +145,13 @@ public class Mesh {
 				
 				if (type.equals("f")) 
 				{
-					for (int j = 0; j < 3; j++) 
+					if(hasTexture)
 					{
-						fFace = t.nextToken();
-						// another tokenizer - based on /
-						ft = new StringTokenizer(fFace, "/");
-						vertIndex.add(Integer.parseInt(ft.nextToken()) - 1); 
-						texIndex.add(Integer.parseInt(ft.nextToken()) - 1);
-						normalIndex.add(Integer.parseInt(ft.nextToken()) - 1);
-						
-						// Add to the index buffer
-						indicesB.add(index++);
-						
-											
+						loadFaceTexture(t);
+					}
+					else
+					{
+						loadFaceNoTexture(t);
 					}
 				}
 			}		
@@ -222,6 +198,57 @@ public class Mesh {
 		} catch(Exception e) {
 			throw e;
 		}
+	}
+	
+	public void loadFaceTexture(StringTokenizer t){
+		String fFace;
+		StringTokenizer ft;
+		for (int j = 0; j < 3; j++) 
+		{
+			fFace = t.nextToken();
+			// another tokenizer - based on /
+			ft = new StringTokenizer(fFace, "/");
+			vertIndex.add(Integer.parseInt(ft.nextToken()) - 1); 
+			texIndex.add(Integer.parseInt(ft.nextToken()) - 1);
+			normalIndex.add(Integer.parseInt(ft.nextToken()) - 1);
+			
+			// Add to the index buffer
+			indicesB.add(index++);
+			
+		}
+				
+	}
+	
+	public void loadFaceNoTexture(StringTokenizer t){
+		String fFace;
+		StringTokenizer ft;
+		for (int j = 0; j < 3; j++) 
+		{
+			fFace = t.nextToken();
+			// another tokenizer - based on /
+			ft = new StringTokenizer(fFace, "//");
+			vertIndex.add(Integer.parseInt(ft.nextToken()) - 1); 
+			texIndex.add(0);
+			normalIndex.add(Integer.parseInt(ft.nextToken()) - 1);
+			
+			// Add to the index buffer
+			indicesB.add(index++);
+								
+		}
+		
+		if(tc.isEmpty())
+		{
+			tc.add((float) 1.0); 	// u
+			tc.add((float) 1.0);	// v
+		}
+	}
+	
+	public void loadFacesTexture(){
+		
+	}
+	
+	public void loadFacesNoTexture(){
+		
 	}
 
 	/***************************

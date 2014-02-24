@@ -1,7 +1,6 @@
 package graphics.shaders;
 
 import android.content.Context;
-import android.opengl.GLES20;
 
 public class Object3D {
 	/*************************

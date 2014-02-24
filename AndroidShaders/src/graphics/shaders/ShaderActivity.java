@@ -83,8 +83,14 @@ public class ShaderActivity extends Activity {
 		case R.id.quit:				// Quit the program
 			quit();
 			return true;
-		case R.id.cube:				// Cube
+		case R.id.monkey:				
+			renderer.setObject(this.MONKEY);
+			return true;
+		case R.id.cube:
 			renderer.setObject(this.CUBE);
+			return true;
+		case R.id.polygon1:				
+			renderer.setObject(this.POLYGON_1);
 			return true;
 		case R.id.texture:			// Enable/disable texturing
 			renderer.flipTexturing();
@@ -183,6 +189,8 @@ public class ShaderActivity extends Activity {
 
 
 	// object constants
+	private final int MONKEY = 0;
+	private final int POLYGON_1 = 1;
 	private final int CUBE = 2;
 
 	// touch events

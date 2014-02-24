@@ -10,9 +10,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
@@ -20,7 +18,6 @@ import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.os.Build;
-import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -52,10 +49,12 @@ import android.widget.Toast;
 	private int[] fShaders;
 
 	// object constants
-	private final int CUBE = 0;
+	private final int CUBE = 2;
+	private final int POLYGON_1 = 1;
+	private final int MONKEY = 0;
 
 	// The objects
-	Object3D[] _objects = new Object3D[1];
+	Object3D[] _objects = new Object3D[3];
 
 	// current object
 	private int _currentObject;
@@ -77,8 +76,6 @@ import android.widget.Toast;
 	// light parameters
 	private float[] lightPos;
 	private float[] lightColor;
-	private float[] lightAmbient;
-	private float[] lightDiffuse;
 	// angle rotation for light
 	float angle = 0.0f;
 	boolean lightRotate = true; 
@@ -130,16 +127,16 @@ import android.widget.Toast;
 		// Create some objects - pass in the textures, the meshes
 		try {
 			int[] normalMapTextures = {R.raw.diffuse_old, R.raw.sphere};
-			_objects[0] = new Object3D(normalMapTextures, R.raw.texturedcube, false, context);
+			_objects[0] = new Object3D(R.raw.monkey, false, context);
+			_objects[1] = new Object3D(R.raw.number_polygons1, false, context);
+			_objects[2] = new Object3D(normalMapTextures, R.raw.texturedcube, true, context);
 		} catch (Exception e) {
-			//showAlert("" + e.getMessage());
 		}
 
 		// set current object and shader
 		_currentShader = this.GOURAUD_SHADER;
 		
 		_currentObject = this.CUBE;
-		flipTexturing();
 		
 	}
 
