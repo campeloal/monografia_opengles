@@ -2,10 +2,13 @@ package graphics.shaders;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ConfigurationInfo;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.FloatMath;
 import android.util.Log;
 import android.view.Menu;
@@ -17,21 +20,22 @@ public class ShaderActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		
 		// Create a new GLSurfaceView - this holds the GL Renderer
 		mGLSurfaceView = new GLSurfaceView(this);
-
+		
 		// detect if OpenGL ES 2.0 support exists - if it doesn't, exit.
 		if (detectOpenGLES20()) {
 			// Tell the surface view we want to create an OpenGL ES 2.0-compatible
 			// context, and set an OpenGL ES 2.0-compatible renderer.
 			mGLSurfaceView.setEGLContextClientVersion(2);
-			renderer = new Renderer(this);
+	        renderer = new Renderer(this);
 			mGLSurfaceView.setRenderer(renderer);
+			
 		} 
-		else { // quit if no support - get a better phone! :P
+		else { 
 			this.finish();
-		}
+		} 
 
 		// set the content view
 		setContentView(mGLSurfaceView);
@@ -83,14 +87,22 @@ public class ShaderActivity extends Activity {
 		case R.id.quit:				// Quit the program
 			quit();
 			return true;
-		case R.id.monkey:				
-			renderer.setObject(this.MONKEY);
-			return true;
-		case R.id.cube:
-			renderer.setObject(this.CUBE);
+		case R.id.polygon0:				
+			renderer.setObject(this.POLYGON_0);
 			return true;
 		case R.id.polygon1:				
 			renderer.setObject(this.POLYGON_1);
+			return true;
+		case R.id.polygon2:
+			renderer.setObject(this.POLYGON_2);
+			return true;
+		/*
+		case R.id.polygon3:
+			renderer.setObject(this.POLYGON_3);
+			return true;
+			*/
+		case R.id.cube:
+			renderer.setObject(this.CUBE);
 			return true;
 		case R.id.texture:			// Enable/disable texturing
 			renderer.flipTexturing();
@@ -189,9 +201,11 @@ public class ShaderActivity extends Activity {
 
 
 	// object constants
-	private final int MONKEY = 0;
+	private final int POLYGON_0 = 0;
 	private final int POLYGON_1 = 1;
-	private final int CUBE = 2;
+	private final int POLYGON_2 = 2;
+	//private final int POLYGON_3 = 3;
+	private final int CUBE = 3;
 
 	// touch events
 	private final int NONE = 0;

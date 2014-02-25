@@ -10,6 +10,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -21,7 +22,7 @@ import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
-@TargetApi(Build.VERSION_CODES.CUPCAKE) @SuppressLint("NewApi") class Renderer implements GLSurfaceView.Renderer {
+class Renderer implements GLSurfaceView.Renderer {
 	/******************************
 	 * PROPERTIES
 	 ******************************/
@@ -41,7 +42,7 @@ import android.widget.Toast;
 	private final int NORMALMAP_SHADER = 2;
 
 	// array of shaders
-	Shader _shaders[] = new Shader[3];
+	Shader _shaders[] = new Shader[4];
 	private int _currentShader;
 
 	/** Shader code **/
@@ -49,12 +50,10 @@ import android.widget.Toast;
 	private int[] fShaders;
 
 	// object constants
-	private final int CUBE = 2;
-	private final int POLYGON_1 = 1;
-	private final int MONKEY = 0;
+	private final int CUBE = 3;
 
 	// The objects
-	Object3D[] _objects = new Object3D[3];
+	Object3D[] _objects = new Object3D[4];
 
 	// current object
 	private int _currentObject;
@@ -95,6 +94,7 @@ import android.widget.Toast;
 	float scaleY = 1.0f;
 	float scaleZ = 1.0f;
 
+	Dialog loader_dialog;
 
 
 	private Context mContext;
@@ -104,7 +104,8 @@ import android.widget.Toast;
 	 * CONSTRUCTOR(S)
 	 **************************/
 	public Renderer(Context context) {
-
+		
+		//this.loader_dialog = loader_dialog;
 		mContext = context;
 
 		// setup all the shaders
@@ -122,16 +123,9 @@ import android.widget.Toast;
 		// normal mapping
 		vShaders[NORMALMAP_SHADER] = R.raw.normalmap_vs;
 		fShaders[NORMALMAP_SHADER] = R.raw.normalmap_ps;
-		
-
-		// Create some objects - pass in the textures, the meshes
-		try {
-			int[] normalMapTextures = {R.raw.diffuse_old, R.raw.sphere};
-			_objects[0] = new Object3D(R.raw.monkey, false, context);
-			_objects[1] = new Object3D(R.raw.number_polygons1, false, context);
-			_objects[2] = new Object3D(normalMapTextures, R.raw.texturedcube, true, context);
-		} catch (Exception e) {
-		}
+			
+		Resources r = Resources.getInstance();
+		this._objects = r.getObjects();
 
 		// set current object and shader
 		_currentShader = this.GOURAUD_SHADER;
@@ -150,7 +144,7 @@ import android.widget.Toast;
 		
 		// Ignore the passed-in GL10 interface, and use the GLES20
 		// class's static methods instead.
-		GLES20.glClearColor(.0f, .0f, .0f, 1.0f);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
 		GLES20.glUseProgram(0);
@@ -290,6 +284,7 @@ import android.widget.Toast;
 	 * Initialization function
 	 */
 	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
+		
 		// initialize shaders
 		try {
 			_shaders[GOURAUD_SHADER] = new Shader(vShaders[GOURAUD_SHADER], fShaders[GOURAUD_SHADER], mContext, false, 0); // gouraud
@@ -312,14 +307,14 @@ import android.widget.Toast;
 		float[] lightP = {30.0f, 0.0f, 10.0f, 1};
 		this.lightPos = lightP;
 
-		float[] lightC = {0.5f, 0.5f, 0.5f,1.0f};
+		float[] lightC = {0.0f, 0.0f, 0.0f,1.0f};
 		this.lightColor = lightC;
 
 		// material properties
 		float[] mA = {1.0f, 0.5f, 0.5f, 1.0f};
 		matAmbient = mA;
 
-		float[] mD = {0.5f, 0.5f, 0.5f, 1.0f};
+		float[] mD = {0.75f, 0.75f, 0.75f, 1.0f};
 		matDiffuse = mD;
 
 		float[] mS =  {1.0f, 1.0f, 1.0f, 1.0f};
@@ -331,8 +326,10 @@ import android.widget.Toast;
 		for(int i = 0; i < _objects.length; i++)
 			setupTextures(_objects[i]);
 
+		//loading_dialog.dismiss();
 		// set the view matrix
 		Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5.0f, 0.0f, 0f, 0f, 0f, 1.0f, 0.0f);
+		//loader_dialog.dismiss();
 	}
 
 	/**************************
@@ -393,6 +390,7 @@ import android.widget.Toast;
 	 * Sets up texturing for the object
 	 */
 	private void setupTextures(Object3D ob) {
+		
 		// create new texture ids if object has them
 		if (ob.hasTexture()) {
 			// number of textures
@@ -438,7 +436,7 @@ import android.widget.Toast;
 				// create it 
 				GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
 				bitmap.recycle();
-
+				
 				Log.d("ATTACHING TEXTURES: ", "Attached " + i);
 			}
 		}
@@ -463,6 +461,8 @@ import android.widget.Toast;
 			throw new RuntimeException(op + ": glError " + error);
 		}
 	}
+	
+	
 
 } 
 
