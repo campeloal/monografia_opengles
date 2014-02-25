@@ -15,22 +15,24 @@ public final class R {
         public static final int loading=0x7f020001;
     }
     public static final class id {
-        public static final int cube=0x7f070005;
-        public static final int gouraud=0x7f070007;
-        public static final int normal_map=0x7f07000a;
-        public static final int phong=0x7f070009;
-        public static final int polygon0=0x7f070001;
-        public static final int polygon1=0x7f070002;
-        public static final int polygon2=0x7f070003;
-        public static final int polygon3=0x7f070004;
-        public static final int quit=0x7f070008;
+        public static final int cube=0x7f070007;
+        public static final int gouraud=0x7f070009;
+        public static final int loading_spinner=0x7f070001;
+        public static final int myAwesomeTextView=0x7f070002;
+        public static final int normal_map=0x7f07000c;
+        public static final int phong=0x7f07000b;
+        public static final int polygon0=0x7f070003;
+        public static final int polygon1=0x7f070004;
+        public static final int polygon2=0x7f070005;
+        public static final int polygon3=0x7f070006;
+        public static final int quit=0x7f07000a;
         public static final int selectLevelID=0x7f070000;
-        public static final int texture=0x7f07000b;
-        public static final int toggleLight=0x7f070006;
+        public static final int texture=0x7f07000d;
+        public static final int toggleLight=0x7f070008;
     }
     public static final class layout {
-        public static final int loader=0x7f030000;
-        public static final int main=0x7f030001;
+        public static final int main=0x7f030000;
+        public static final int spinner=0x7f030001;
         public static final int splash=0x7f030002;
     }
     public static final class menu {

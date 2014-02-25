@@ -3,7 +3,6 @@
     android:id="@+id/selectLevelID"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@drawable/loading"
     android:orientation="vertical" >
 
 </RelativeLayout>
