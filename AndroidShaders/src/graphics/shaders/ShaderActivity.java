@@ -46,7 +46,7 @@ public class ShaderActivity extends Activity {
 		 
 		// set the content view
 		setContentView(mGLSurfaceView);
-		createButtons(width,height);
+		createButtons(width,height,this);
 		
 	}
 
@@ -62,7 +62,7 @@ public class ShaderActivity extends Activity {
 		return (info.reqGlEsVersion >= 0x20000);
 	}
 	
-	private void createButtons(int width, int height){
+	private void createButtons(int width, int height, Context context){
 		
 		final Drawable draw_add = this.getResources().getDrawable(R.raw.add);
 		final Drawable draw_add_press = this.getResources().getDrawable(R.raw.add_press);
@@ -72,11 +72,11 @@ public class ShaderActivity extends Activity {
 		final Button add = new Button(this);
 		final Button dec = new Button(this);
 		add.setX((float) (width * 0.025));
-		add.setY((float) (height*0.2));
+		add.setY((float) (height*0.05));
 		add.setBackground(draw_add);
-		dec.setBackground(draw_dec);
 		dec.setX((float) (width * 0.025));
-		dec.setY((float) (height*0.05));
+		dec.setY((float) (height*0.2));
+		dec.setBackground(draw_dec);
 		
 		
 		add.setOnTouchListener(new OnTouchListener() {
@@ -84,10 +84,11 @@ public class ShaderActivity extends Activity {
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 			    if (event.getAction() == MotionEvent.ACTION_DOWN) {
-			            add.setBackground(draw_add_press);
+			        add.setBackground(draw_add_press);
 			    }
 			    else if (event.getAction() == MotionEvent.ACTION_UP) {
 			    	add.setBackground(draw_add);
+			    	addPolygons();
 			    }
 
 			    return true;
@@ -103,15 +104,37 @@ public class ShaderActivity extends Activity {
 			    }
 			    else if (event.getAction() == MotionEvent.ACTION_UP) {
 			    	dec.setBackground(draw_dec);
+			    	decPolygons();
 			    }
 
 			    return true;
 			}
 			});
 		
+		
 		addContentView(add, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 		addContentView(dec, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+	}
+	
+	public void addPolygons(){
+		
+		if(CURRENT_POLYGON < LAST_POLYGON)
+		{
+			CURRENT_POLYGON++;
+			renderer.setObject(CURRENT_POLYGON);
+		}
+		
+	}
+	
+public void decPolygons(){
+		
+		if(CURRENT_POLYGON > FIRST_POLYGON)
+		{
+			CURRENT_POLYGON--;
+			renderer.setObject(CURRENT_POLYGON);
+		}
+		
 	}
 
 	/************
@@ -123,7 +146,7 @@ public class ShaderActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.game_menu, menu);
+		inflater.inflate(R.menu.menu, menu);
 		return true;
 	}
 
@@ -147,23 +170,6 @@ public class ShaderActivity extends Activity {
 			return true;
 		case R.id.quit:				// Quit the program
 			quit();
-			return true;
-		case R.id.polygon0:				
-			renderer.setObject(this.POLYGON_0);
-			return true;
-		case R.id.polygon1:				
-			renderer.setObject(this.POLYGON_1);
-			return true;
-		case R.id.polygon2:
-			renderer.setObject(this.POLYGON_2);
-			return true;
-		/*
-		case R.id.polygon3:
-			renderer.setObject(this.POLYGON_3);
-			return true;
-			*/
-		case R.id.cube:
-			renderer.setObject(this.CUBE);
 			return true;
 		case R.id.texture:			// Enable/disable texturing
 			renderer.flipTexturing();
@@ -265,8 +271,12 @@ public class ShaderActivity extends Activity {
 	private final int POLYGON_0 = 0;
 	private final int POLYGON_1 = 1;
 	private final int POLYGON_2 = 2;
-	//private final int POLYGON_3 = 3;
 	private final int CUBE = 3;
+	//private final int POLYGON_3 = 3;
+	private int CURRENT_POLYGON = 0;
+	private final int LAST_POLYGON = 3;
+	private final int FIRST_POLYGON = 0;
+	
 
 	// touch events
 	private final int NONE = 0;

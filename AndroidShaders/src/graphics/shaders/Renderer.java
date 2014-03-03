@@ -130,7 +130,7 @@ class Renderer implements GLSurfaceView.Renderer {
 		// set current object and shader
 		_currentShader = this.GOURAUD_SHADER;
 		
-		_currentObject = this.CUBE;
+		_currentObject = 0;
 		
 	}
 

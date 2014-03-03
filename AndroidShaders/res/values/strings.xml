@@ -1,17 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="cube"> Textured Cube</string>
-    <string name="polygon0">Polygon 0</string>
-    <string name="polygon1">Polygon 1</string>
-    <string name="polygon2">Polygon 2</string>
-    <string name="polygon3">Polygon 3</string>
-    <string name="toggleLight">Light Rotation</string><string name="gouraud">Shader: Gouraud</string>
-    <string name="phong">Shader: Phong</string>
-	<string name="normal">Shader: Normal Mapping</string>
+    <string name="toggleLight">Light Rotation</string>
+    <string name="gouraud">Gouraud Shader</string>
+    <string name="phong">Phong Shader</string>
+	<string name="normal">Normal Mapping Shader</string>
     <string name="app_name">Shader Performance</string>
     <string name="texture">Texture on/off</string>
-    <string name="bt_add">+</string>
-    <string name="bt_sub">-</string>
     <string name="quit">Quit</string>
     
 </resources>
