@@ -2,10 +2,9 @@ package graphics.shaders;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.Dialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ConfigurationInfo;
+import android.graphics.drawable.Drawable;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -15,11 +14,19 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
+import android.widget.Button;
 
 public class ShaderActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		DisplayMetrics metrics = this.getResources().getDisplayMetrics();
+		int width = metrics.widthPixels;
+		int height = metrics.heightPixels;		
 		
 		// Create a new GLSurfaceView - this holds the GL Renderer
 		mGLSurfaceView = new GLSurfaceView(this);
@@ -36,9 +43,11 @@ public class ShaderActivity extends Activity {
 		else { 
 			this.finish();
 		} 
-
+		 
 		// set the content view
 		setContentView(mGLSurfaceView);
+		createButtons(width,height);
+		
 	}
 
 	/**
@@ -51,6 +60,58 @@ public class ShaderActivity extends Activity {
 		ConfigurationInfo info = am.getDeviceConfigurationInfo();
 		Log.d("OpenGL Ver:", info.getGlEsVersion());
 		return (info.reqGlEsVersion >= 0x20000);
+	}
+	
+	private void createButtons(int width, int height){
+		
+		final Drawable draw_add = this.getResources().getDrawable(R.raw.add);
+		final Drawable draw_add_press = this.getResources().getDrawable(R.raw.add_press);
+		final Drawable draw_dec = this.getResources().getDrawable(R.raw.dec);
+		final Drawable draw_dec_press = this.getResources().getDrawable(R.raw.dec_press);
+		
+		final Button add = new Button(this);
+		final Button dec = new Button(this);
+		add.setX((float) (width * 0.025));
+		add.setY((float) (height*0.2));
+		add.setBackground(draw_add);
+		dec.setBackground(draw_dec);
+		dec.setX((float) (width * 0.025));
+		dec.setY((float) (height*0.05));
+		
+		
+		add.setOnTouchListener(new OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+			    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			            add.setBackground(draw_add_press);
+			    }
+			    else if (event.getAction() == MotionEvent.ACTION_UP) {
+			    	add.setBackground(draw_add);
+			    }
+
+			    return true;
+			}
+			});
+		
+		dec.setOnTouchListener(new OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+			    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			        dec.setBackground(draw_dec_press);
+			    }
+			    else if (event.getAction() == MotionEvent.ACTION_UP) {
+			    	dec.setBackground(draw_dec);
+			    }
+
+			    return true;
+			}
+			});
+		
+		addContentView(add, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+		addContentView(dec, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
 	}
 
 	/************

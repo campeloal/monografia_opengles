@@ -1,6 +1,5 @@
 package graphics.shaders;
 
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
@@ -33,7 +32,7 @@ public class SplashActivity extends Activity {
 			{
                 try 
                 {
-                	int[] normalMapTextures = {R.raw.diffuse_old, R.raw.sphere};
+                	int[] normalMapTextures = {R.raw.diffuse_old, R.raw.diffuse};
         			_objects[0] = new Object3D(R.raw.number_polygons0, false, context);
         			_objects[1] = new Object3D(R.raw.number_polygons1, false, context);
         			_objects[2] = new Object3D(R.raw.number_polygons2, false, context);

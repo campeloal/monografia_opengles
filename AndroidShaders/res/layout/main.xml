@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/selectLevelID"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@drawable/loading"
     android:orientation="vertical" >
+       
+    <Button
+    android:id="@+id/Button1"
+    android:layout_width="150dip"
+    android:layout_height="100dip"
+    android:text="@+id/bt_add"
+    android:onClick="onClick"
+     />
 
-</RelativeLayout>
+</FrameLayout>
