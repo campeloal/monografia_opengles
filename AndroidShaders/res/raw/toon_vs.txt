@@ -1,0 +1,18 @@
+uniform vec3 lightPos;
+uniform mat4 uMVPMatrix;
+attribute vec3 aNormal; 
+attribute vec4 aPosition;
+varying float intensity;
+
+// dot function between two vectors
+float dot(vec3 v1, vec3 v2) {
+	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+	
+void main()
+{
+	vec4 posit = uMVPMatrix * aPosition;
+	vec3 lightDir = lightPos.xyz - posit.xyz;
+	intensity = dot(lightDir,aNormal);
+	gl_Position = posit;
+} 

@@ -40,17 +40,12 @@ class Renderer implements GLSurfaceView.Renderer {
 	private final int GOURAUD_SHADER = 0;
 	private final int PHONG_SHADER = 1;
 	private final int NORMALMAP_SHADER = 2;
+	private final int RED_SHADER = 3;
+	private final int TOON_SHADER = 4;
 
 	// array of shaders
-	Shader _shaders[] = new Shader[4];
+	Shader _shaders[] = new Shader[5];
 	private int _currentShader;
-
-	/** Shader code **/
-	private int[] vShaders;
-	private int[] fShaders;
-
-	// object constants
-	private final int CUBE = 3;
 
 	// The objects
 	Object3D[] _objects = new Object3D[4];
@@ -71,20 +66,23 @@ class Renderer implements GLSurfaceView.Renderer {
 	// textures enabled?
 	private boolean enableTexture = true;
 	private int[] _texIDs;
+	
+	//which shader is enabled?
+	private boolean gouraudShader = false;
+	private boolean phongShader = false;
+	private boolean normalMapShader = false;
+	private boolean redShader = false;
+	private boolean toonShader = false;
 
 	// light parameters
-	private float[] lightPos;
-	private float[] lightColor;
-	// angle rotation for light
-	float angle = 0.0f;
-	boolean lightRotate = true; 
-
+	private float[] lightPos = {30.0f, 0.0f, 10.0f, 1};
+	private float[] lightColor = {0.53f, 0.33f, 0.33f,1.0f};
 
 	// material properties
-	private float[] matAmbient;
-	private float[] matDiffuse;
-	private float[] matSpecular;
-	private float matShininess;
+	private float[] matAmbient = {1.0f, 0.5f, 0.5f, 1.0f};
+	private float[] matDiffuse = {0.75f, 0.75f, 0.75f, 1.0f};
+	private float[] matSpecular = {1.0f, 1.0f, 1.0f, 1.0f};
+	private float matShininess = 5.0f;
 
 	// eye pos
 	private float[] eyePos = {-5.0f, 0.0f, 0.0f};
@@ -107,29 +105,13 @@ class Renderer implements GLSurfaceView.Renderer {
 		
 		//this.loader_dialog = loader_dialog;
 		mContext = context;
-
-		// setup all the shaders
-		vShaders = new int[3];
-		fShaders = new int[3];
-
-		// basic - just gouraud shading
-		vShaders[GOURAUD_SHADER] = R.raw.gouraud_vs;
-		fShaders[GOURAUD_SHADER] = R.raw.gouraud_ps;
-
-		// phong shading
-		vShaders[PHONG_SHADER] = R.raw.phong_vs;
-		fShaders[PHONG_SHADER] = R.raw.phong_ps;
-
-		// normal mapping
-		vShaders[NORMALMAP_SHADER] = R.raw.normalmap_vs;
-		fShaders[NORMALMAP_SHADER] = R.raw.normalmap_ps;
-			
+		
 		Resources r = Resources.getInstance();
 		this._objects = r.getObjects();
 
 		// set current object and shader
 		_currentShader = this.GOURAUD_SHADER;
-		
+		gouraudShader = true;
 		_currentObject = 0;
 		
 	}
@@ -144,7 +126,7 @@ class Renderer implements GLSurfaceView.Renderer {
 		
 		// Ignore the passed-in GL10 interface, and use the GLES20
 		// class's static methods instead.
-		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
 		GLES20.glUseProgram(0);
@@ -156,18 +138,6 @@ class Renderer implements GLSurfaceView.Renderer {
 		// Start using the shader
 		GLES20.glUseProgram(_program);
 		checkGlError("glUseProgram");
-		
-		// rotate the light?
-		if (lightRotate) {
-			angle += 0.000005f;
-			if (angle >= 6.2)
-				angle = 0.0f;
-
-			// rotate light about y-axis
-			float newPosX = (float)(Math.cos(angle) * lightPos[0] - Math.sin(angle) * lightPos[2]);
-			float newPosZ = (float)(Math.sin(angle) * lightPos[0] + Math.cos(angle) * lightPos[2]);
-			lightPos[0] = newPosX; lightPos[2] = newPosZ;
-		}
 
 		// scaling
 		Matrix.setIdentityM(mScaleMatrix, 0);
@@ -193,24 +163,6 @@ class Renderer implements GLSurfaceView.Renderer {
 		Matrix.invertM(normalMatrix, 0, mMVPMatrix, 0);
 		Matrix.transposeM(normalMatrix, 0, normalMatrix, 0);
 		
-		// send to the shader
-		GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(_program, "normalMatrix"), 1, false, mMVPMatrix, 0);
-		
-		// lighting variables
-		// send to shaders
-		GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "lightPos"), 1, lightPos, 0);
-		GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "lightColor"), 1, lightColor, 0);
-		
-		
-		// material 
-		GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "matAmbient"), 1, matAmbient, 0);
-		GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "matDiffuse"), 1, matDiffuse, 0);
-		GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "matSpecular"), 1, matSpecular, 0);
-		GLES20.glUniform1f(GLES20.glGetUniformLocation(_program, "matShininess"), matShininess);
-		
-		// eye position
-		GLES20.glUniform3fv(GLES20.glGetUniformLocation(_program, "eyePos")/*shader.eyeHandle*/, 1, eyePos, 0);
-
 		/*** DRAWING OBJECT **/
 		// Get buffers from mesh
 		Object3D ob = this._objects[this._currentObject];
@@ -227,12 +179,33 @@ class Renderer implements GLSurfaceView.Renderer {
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
 		GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aPosition"));
 
-		// the normal info
-		_vb.position(TRIANGLE_VERTICES_DATA_NOR_OFFSET);
-		GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
-				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-		GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
-		
+		if(gouraudShader || phongShader || normalMapShader)
+		{
+			// send to the shader
+			GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(_program, "normalMatrix"), 1, false, mMVPMatrix, 0);
+			
+			// lighting variables
+			// send to shaders
+			GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "lightPos"), 1, lightPos, 0);
+			GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "lightColor"), 1, lightColor, 0);
+			
+			
+			// material 
+			GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "matAmbient"), 1, matAmbient, 0);
+			GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "matDiffuse"), 1, matDiffuse, 0);
+			GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "matSpecular"), 1, matSpecular, 0);
+			GLES20.glUniform1f(GLES20.glGetUniformLocation(_program, "matShininess"), matShininess);
+			
+			// eye position
+			GLES20.glUniform3fv(GLES20.glGetUniformLocation(_program, "eyePos")/*shader.eyeHandle*/, 1, eyePos, 0);
+			// enable texturing? [fix - sending float is waste]
+			GLES20.glUniform1f(GLES20.glGetUniformLocation(_program, "hasTexture")/*shader.hasTextureHandle*/, ob.hasTexture() && enableTexture ? 2.0f : 0.0f);
+			// the normal info
+			_vb.position(TRIANGLE_VERTICES_DATA_NOR_OFFSET);
+			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
+					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
+			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
+		}
 
 		// Texture info
 
@@ -249,19 +222,17 @@ class Renderer implements GLSurfaceView.Renderer {
 			}
 		} 
 		
-
-		// enable texturing? [fix - sending float is waste]
-		GLES20.glUniform1f(GLES20.glGetUniformLocation(_program, "hasTexture")/*shader.hasTextureHandle*/, ob.hasTexture() && enableTexture ? 2.0f : 0.0f);
-		
-		// texture coordinates
-		_vb.position(TRIANGLE_VERTICES_DATA_TEX_OFFSET);
-		GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "textureCoord")/*shader.maTextureHandle*/, 2, GLES20.GL_FLOAT, false,
-				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-		GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "textureCoord"));//GLES20.glEnableVertexAttribArray(shader.maTextureHandle);
+		if(ob.hasTexture())
+		{
+			// texture coordinates
+			_vb.position(TRIANGLE_VERTICES_DATA_TEX_OFFSET);
+			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "textureCoord")/*shader.maTextureHandle*/, 2, GLES20.GL_FLOAT, false,
+					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
+			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "textureCoord"));//GLES20.glEnableVertexAttribArray(shader.maTextureHandle);
+		}
 		
 		// Draw with indices
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, _indices.length, GLES20.GL_UNSIGNED_SHORT, _ib);
-		
 		
 		
 		checkGlError("glDrawElements");
@@ -287,9 +258,11 @@ class Renderer implements GLSurfaceView.Renderer {
 		
 		// initialize shaders
 		try {
-			_shaders[GOURAUD_SHADER] = new Shader(vShaders[GOURAUD_SHADER], fShaders[GOURAUD_SHADER], mContext, false, 0); // gouraud
-			_shaders[PHONG_SHADER] = new Shader(vShaders[PHONG_SHADER], fShaders[PHONG_SHADER], mContext, false, 0); // phong
-			_shaders[NORMALMAP_SHADER] = new Shader(vShaders[NORMALMAP_SHADER], fShaders[NORMALMAP_SHADER], mContext, false, 0); // normal map
+			_shaders[GOURAUD_SHADER] = new Shader(R.raw.gouraud_vs,R.raw.gouraud_ps, mContext, false, 0); // gouraud
+			_shaders[PHONG_SHADER] = new Shader(R.raw.phong_vs, R.raw.phong_ps, mContext, false, 0); // phong
+			_shaders[NORMALMAP_SHADER] = new Shader(R.raw.normalmap_vs, R.raw.normalmap_ps, mContext, false, 0); // normal map
+			_shaders[RED_SHADER] = new Shader(R.raw.red_vs, R.raw.red_ps, mContext, false, 0);
+			_shaders[TOON_SHADER] = new Shader(R.raw.toon_vs, R.raw.toon_ps, mContext, false, 0);
 		} catch (Exception e) {
 			Log.d("SHADER 0 SETUP", e.getLocalizedMessage());
 		}
@@ -303,58 +276,41 @@ class Renderer implements GLSurfaceView.Renderer {
 		GLES20.glEnable( GLES20.GL_CULL_FACE );
 		GLES20.glCullFace(GLES20.GL_BACK); 
 
-		// light variables
-		float[] lightP = {30.0f, 0.0f, 10.0f, 1};
-		this.lightPos = lightP;
-
-		float[] lightC = {0.0f, 0.0f, 0.0f,1.0f};
-		this.lightColor = lightC;
-
-		// material properties
-		float[] mA = {1.0f, 0.5f, 0.5f, 1.0f};
-		matAmbient = mA;
-
-		float[] mD = {0.75f, 0.75f, 0.75f, 1.0f};
-		matDiffuse = mD;
-
-		float[] mS =  {1.0f, 1.0f, 1.0f, 1.0f};
-		matSpecular = mS;
-
-		matShininess = 5.0f;
-
-		// setup textures for all objects
+				// setup textures for all objects
 		for(int i = 0; i < _objects.length; i++)
 			setupTextures(_objects[i]);
 
-		//loading_dialog.dismiss();
 		// set the view matrix
 		Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5.0f, 0.0f, 0f, 0f, 0f, 1.0f, 0.0f);
-		//loader_dialog.dismiss();
 	}
 
-	/**************************
-	 * OTHER METHODS
-	 *************************/
-
-	/**
-	 * Changes the shader based on menu selection
-	 * @param represents the other shader 
-	 */
 	public void setShader(int shader) {
 		_currentShader = shader;
 	}
 
-	/**
-	 * Changes the object based on menu selection
-	 * @param represents the other object 
-	 */
 	public void setObject(int object) {
 		_currentObject = object;
 	}
 
-	/**
-	 * Show texture or not?
-	 */
+	public void enableRedShader(boolean enable){
+		this.redShader = enable;
+	}
+	
+	public void enableGouraudShader(boolean enable){
+		this.gouraudShader = enable;
+	}
+	
+	public void enablePhongShader(boolean enable){
+		this.phongShader = enable;
+	}
+	
+	public void enableNormalShader(boolean enable){
+		this.normalMapShader = enable;
+	}
+	
+	public void enableToonShader(boolean enable){
+		this.toonShader = enable;
+	}
 	public void flipTexturing() {
 		enableTexture = !enableTexture;
 		Object3D ob = _objects[this._currentObject];
@@ -368,22 +324,6 @@ class Renderer implements GLSurfaceView.Renderer {
 			toast.show();
 		}
 		//this.toggleTexturing();
-	}
-
-	/**
-	 * Rotate light or not?
-	 */
-	public void toggleLight() {
-		this.lightRotate = !lightRotate;
-		CharSequence text;
-		if (lightRotate)
-			text = "Light rotation resumed";
-		else
-			text = "Light rotation paused";
-		int duration = Toast.LENGTH_SHORT;
-
-		Toast toast = Toast.makeText(mContext, text, duration);
-		toast.show();
 	}
 
 	/**

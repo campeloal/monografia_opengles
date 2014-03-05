@@ -156,17 +156,45 @@ public void decPolygons(){
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle item selection
 		switch (item.getItemId()) {
-		case R.id.toggleLight:
-			renderer.toggleLight();
-			return true;
 		case R.id.gouraud: 			// Gouraud Shading
 			renderer.setShader(this.GOURAUD_SHADER);
+			renderer.enableGouraudShader(true);
+			renderer.enablePhongShader(false);
+			renderer.enableNormalShader(false);
+			renderer.enableRedShader(false);
+			renderer.enableToonShader(false);
 			return true;
 		case R.id.phong: 			// Phong Shading
 			renderer.setShader(this.PHONG_SHADER);
+			renderer.enableGouraudShader(false);
+			renderer.enablePhongShader(true);
+			renderer.enableNormalShader(false);
+			renderer.enableRedShader(false);
+			renderer.enableToonShader(false);
 			return true;
 		case R.id.normal_map:		// Normal Mapping
 			renderer.setShader(this.NORMALMAP_SHADER);
+			renderer.enableGouraudShader(false);
+			renderer.enablePhongShader(false);
+			renderer.enableNormalShader(true);
+			renderer.enableRedShader(false);
+			renderer.enableToonShader(false);
+			return true;
+		case R.id.red:
+			renderer.setShader(this.RED_SHADER);
+			renderer.enableGouraudShader(false);
+			renderer.enablePhongShader(false);
+			renderer.enableNormalShader(false);
+			renderer.enableRedShader(true);
+			renderer.enableToonShader(false);
+			return true;
+		case R.id.toon:
+			renderer.setShader(this.TOON_SHADER);
+			renderer.enableGouraudShader(false);
+			renderer.enablePhongShader(false);
+			renderer.enableNormalShader(false);
+			renderer.enableRedShader(false);
+			renderer.enableToonShader(true);
 			return true;
 		case R.id.quit:				// Quit the program
 			quit();
@@ -265,13 +293,9 @@ public void decPolygons(){
 	private final int GOURAUD_SHADER = 0;
 	private final int PHONG_SHADER = 1;
 	private final int NORMALMAP_SHADER = 2;
+	private final int RED_SHADER = 3;
+	private final int TOON_SHADER = 4;
 
-
-	// object constants
-	private final int POLYGON_0 = 0;
-	private final int POLYGON_1 = 1;
-	private final int POLYGON_2 = 2;
-	private final int CUBE = 3;
 	//private final int POLYGON_3 = 3;
 	private int CURRENT_POLYGON = 0;
 	private final int LAST_POLYGON = 3;

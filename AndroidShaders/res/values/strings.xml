@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="toggleLight">Light Rotation</string>
     <string name="gouraud">Gouraud Shader</string>
     <string name="phong">Phong Shader</string>
 	<string name="normal">Normal Mapping Shader</string>
+	<string name="red">Red Shader</string>
+	<string name="toon">Toon Shader</string>
     <string name="app_name">Shader Performance</string>
     <string name="texture">Texture on/off</string>
     <string name="quit">Quit</string>
