@@ -3,6 +3,7 @@ package graphics.shaders;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -75,7 +76,8 @@ class Renderer implements GLSurfaceView.Renderer {
 	private boolean toonShader = false;
 
 	// light parameters
-	private float[] lightPos = {30.0f, 0.0f, 10.0f, 1};
+	private float[] lightPos = {0.0f, 0.0f, 0.0f, 1};
+	private float[] lightDir = {0.0f,1.0f,1.0f};
 	private float[] lightColor = {0.53f, 0.33f, 0.33f,1.0f};
 
 	// material properties
@@ -109,7 +111,7 @@ class Renderer implements GLSurfaceView.Renderer {
 		Resources r = Resources.getInstance();
 		this._objects = r.getObjects();
 
-		// set current object and shader
+		//set current object and shader
 		_currentShader = this.GOURAUD_SHADER;
 		gouraudShader = true;
 		_currentObject = 0;
@@ -178,7 +180,7 @@ class Renderer implements GLSurfaceView.Renderer {
 		GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aPosition"), 3, GLES20.GL_FLOAT, false,
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
 		GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aPosition"));
-
+		
 		if(gouraudShader || phongShader || normalMapShader)
 		{
 			// send to the shader
@@ -206,6 +208,17 @@ class Renderer implements GLSurfaceView.Renderer {
 					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
 			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
 		}
+		
+		if(toonShader)
+		{
+			int loc = GLES20.glGetUniformLocation(_program, "lightDir");
+			GLES20.glUniform3fv(loc, 1, lightDir,0);
+			// the normal info
+			_vb.position(TRIANGLE_VERTICES_DATA_NOR_OFFSET);
+			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
+					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
+			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
+		}
 
 		// Texture info
 
@@ -213,10 +226,13 @@ class Renderer implements GLSurfaceView.Renderer {
 		if (ob.hasTexture()) {// && enableTexture) {
 			// number of textures
 			int[] texIDs = ob.get_texID(); 
+			//GLES20.glBindTexture(GLES20.GL_TEXTURE_CUBE_MAP, texIDs[i]);
+			//IntBuffer texObj = null;
+			//GLES20.glGenTextures(1, texObj);
 			
 			for(int i = 0; i < _texIDs.length; i++) {
+				
 				GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + i);
-				//Log.d("TEXTURE BIND: ", i + " " + texIDs[i]);
 				GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texIDs[i]);
 				GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "texture" + (i+1)), i);
 			}
