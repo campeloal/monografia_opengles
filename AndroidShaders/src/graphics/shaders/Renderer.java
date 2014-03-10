@@ -2,6 +2,7 @@ package graphics.shaders;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
@@ -43,9 +44,11 @@ class Renderer implements GLSurfaceView.Renderer {
 	private final int NORMALMAP_SHADER = 2;
 	private final int RED_SHADER = 3;
 	private final int TOON_SHADER = 4;
+	private final int FLAT_SHADER = 5;
+	private final int REFLECTION_SHADER = 6;
 
 	// array of shaders
-	Shader _shaders[] = new Shader[5];
+	Shader _shaders[] = new Shader[7];
 	private int _currentShader;
 
 	// The objects
@@ -74,6 +77,7 @@ class Renderer implements GLSurfaceView.Renderer {
 	private boolean normalMapShader = false;
 	private boolean redShader = false;
 	private boolean toonShader = false;
+	private boolean reflectionShader = false;
 
 	// light parameters
 	private float[] lightPos = {0.0f, 0.0f, 0.0f, 1};
@@ -96,6 +100,7 @@ class Renderer implements GLSurfaceView.Renderer {
 
 	Dialog loader_dialog;
 
+	private int mTextureId;
 
 	private Context mContext;
 	private static String TAG = "Renderer";
@@ -219,10 +224,22 @@ class Renderer implements GLSurfaceView.Renderer {
 					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
 			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
 		}
+		
+		if(reflectionShader)
+		{
+			// Bind the texture
+	        GLES20.glActiveTexture ( GLES20.GL_TEXTURE0 );
+	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_CUBE_MAP, mTextureId );
+			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
+					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
+			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
+			GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "s_texture"), 0);
+		}
 
 		// Texture info
 
 		// bind textures
+		/*
 		if (ob.hasTexture()) {// && enableTexture) {
 			// number of textures
 			int[] texIDs = ob.get_texID(); 
@@ -236,16 +253,17 @@ class Renderer implements GLSurfaceView.Renderer {
 				GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texIDs[i]);
 				GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "texture" + (i+1)), i);
 			}
-		} 
+		} */ 
 		
+		/*
 		if(ob.hasTexture())
 		{
 			// texture coordinates
 			_vb.position(TRIANGLE_VERTICES_DATA_TEX_OFFSET);
-			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "textureCoord")/*shader.maTextureHandle*/, 2, GLES20.GL_FLOAT, false,
+			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "textureCoord"), 2, GLES20.GL_FLOAT, false,
 					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
 			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "textureCoord"));//GLES20.glEnableVertexAttribArray(shader.maTextureHandle);
-		}
+		} */
 		
 		// Draw with indices
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, _indices.length, GLES20.GL_UNSIGNED_SHORT, _ib);
@@ -279,11 +297,12 @@ class Renderer implements GLSurfaceView.Renderer {
 			_shaders[NORMALMAP_SHADER] = new Shader(R.raw.normalmap_vs, R.raw.normalmap_ps, mContext, false, 0); // normal map
 			_shaders[RED_SHADER] = new Shader(R.raw.red_vs, R.raw.red_ps, mContext, false, 0);
 			_shaders[TOON_SHADER] = new Shader(R.raw.toon_vs, R.raw.toon_ps, mContext, false, 0);
+			_shaders[FLAT_SHADER] = new Shader(R.raw.flat_vs, R.raw.flat_ps, mContext, false, 0);
+			_shaders[REFLECTION_SHADER] = new Shader(R.raw.reflection_vs, R.raw.reflection_ps, mContext, false, 0);
 		} catch (Exception e) {
 			Log.d("SHADER 0 SETUP", e.getLocalizedMessage());
 		}
 
-		//GLES20.glEnable   ( GLES20.GL_DEPTH_TEST );
 		GLES20.glClearDepthf(1.0f);
 		GLES20.glDepthFunc( GLES20.GL_LEQUAL );
 		GLES20.glDepthMask( true );
@@ -293,8 +312,11 @@ class Renderer implements GLSurfaceView.Renderer {
 		GLES20.glCullFace(GLES20.GL_BACK); 
 
 				// setup textures for all objects
-		for(int i = 0; i < _objects.length; i++)
+		/*for(int i = 0; i < _objects.length; i++)
 			setupTextures(_objects[i]);
+		*/
+		 // Load the texture
+        mTextureId = createSimpleTextureCubemap ();
 
 		// set the view matrix
 		Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5.0f, 0.0f, 0f, 0f, 0f, 1.0f, 0.0f);
@@ -327,6 +349,11 @@ class Renderer implements GLSurfaceView.Renderer {
 	public void enableToonShader(boolean enable){
 		this.toonShader = enable;
 	}
+	
+	public void enableReflectionShader(boolean enable){
+		this.reflectionShader = enable;
+	}
+	
 	public void flipTexturing() {
 		enableTexture = !enableTexture;
 		Object3D ob = _objects[this._currentObject];
@@ -397,6 +424,69 @@ class Renderer implements GLSurfaceView.Renderer {
 			}
 		}
 	}
+	
+	private int createSimpleTextureCubemap( )
+    {
+        int[] textureId = new int[1];
+
+        // Face 0 - Red        
+        byte[] cubePixels0 = { 127, 0, 0 };
+        // Face 1 - Green
+        byte[] cubePixels1 = { 0, 127, 0 }; 
+        // Face 2 - Blue
+        byte[] cubePixels2 = { 0, 0, 127 };
+        // Face 3 - Yellow
+        byte[] cubePixels3 = { 127, 127, 0 };
+        // Face 4 - Purple
+        byte[] cubePixels4 = { 127, 0, 127 };
+        // Face 5 - White
+        byte[] cubePixels5 = { 127, 127, 127 };
+                
+        ByteBuffer cubePixels = ByteBuffer.allocateDirect(3);
+    
+        // Generate a texture object
+        GLES20.glGenTextures ( 1, textureId, 0 );
+
+        // Bind the texture object
+        GLES20.glBindTexture ( GLES20.GL_TEXTURE_CUBE_MAP, textureId[0] );
+    
+        // Load the cube face - Positive X
+        cubePixels.put(cubePixels0).position(0);
+        GLES20.glTexImage2D ( GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GLES20.GL_RGB, 1, 1, 0, 
+                              GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, cubePixels );
+
+        // Load the cube face - Negative X
+        cubePixels.put(cubePixels1).position(0);
+        GLES20.glTexImage2D ( GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GLES20.GL_RGB, 1, 1, 0, 
+                              GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, cubePixels );
+
+        // Load the cube face - Positive Y
+        cubePixels.put(cubePixels2).position(0);        
+        GLES20.glTexImage2D ( GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GLES20.GL_RGB, 1, 1, 0, 
+                              GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, cubePixels );
+
+        // Load the cube face - Negative Y
+        cubePixels.put(cubePixels3).position(0);
+        GLES20.glTexImage2D ( GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GLES20.GL_RGB, 1, 1, 0, 
+                              GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, cubePixels );
+
+        // Load the cube face - Positive Z
+        cubePixels.put(cubePixels4).position(0);        
+        GLES20.glTexImage2D ( GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GLES20.GL_RGB, 1, 1, 0, 
+                              GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, cubePixels );
+
+        // Load the cube face - Negative Z
+        cubePixels.put(cubePixels5).position(0);
+        GLES20.glTexImage2D ( GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GLES20.GL_RGB, 1, 1, 0, 
+                              GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, cubePixels );
+
+        // Set the filtering mode
+        GLES20.glTexParameteri ( GLES20.GL_TEXTURE_CUBE_MAP, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST );
+        GLES20.glTexParameteri ( GLES20.GL_TEXTURE_CUBE_MAP, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST );
+
+        return textureId[0];
+    }
+
 
 	/**
 	 * Scaling
