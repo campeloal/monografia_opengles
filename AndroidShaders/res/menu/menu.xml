@@ -2,10 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
   	<item android:id="@+id/gouraud" android:title="@string/gouraud"></item>
     <item android:id="@+id/phong" android:title="@+string/phong"></item>
-    <item android:id="@+id/normal_map" android:title="@+string/normal"></item>
     <item android:id="@+id/red" android:title="@+string/red"></item>
     <item android:id="@+id/toon" android:title="@+string/toon"></item>
-    <item android:id="@+id/texture" android:title="@+string/texture"></item>
+    <item android:id="@+id/flat" android:title="@+string/flat"></item>
+    <item android:id="@+id/cubemap" android:title="@+string/cubemap"></item>
     <item android:id="@+id/quit"
           android:title="@string/quit" >
     </item>

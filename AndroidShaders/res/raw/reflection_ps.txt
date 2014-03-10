@@ -1,0 +1,14 @@
+uniform mediump vec3 EyePosition;
+uniform mediump vec3 n_eye;                             
+uniform samplerCube s_texture;
+uniform mediump mat4 inv_view;
+
+                      
+void main()                                         
+{
+  mediump vec3 incident_eye = normalize(EyePosition);
+  mediump vec3 normal = normalize(n_eye);        
+  mediump vec3 reflected = reflect(incident_eye, normal);
+  reflected = vec3( inv_view * vec4(reflected, 0.0));                                     
+  gl_FragColor = textureCube( s_texture, reflected);
+}  
