@@ -57,18 +57,19 @@ public final class R {
         public static final int number_polygons1=0x7f040016;
         public static final int number_polygons2=0x7f040017;
         public static final int number_polygons3=0x7f040018;
-        public static final int phong_ps=0x7f040019;
-        public static final int phong_vs=0x7f04001a;
-        public static final int positive_x=0x7f04001b;
-        public static final int positive_y=0x7f04001c;
-        public static final int positive_z=0x7f04001d;
-        public static final int red_ps=0x7f04001e;
-        public static final int red_vs=0x7f04001f;
-        public static final int reflection_ps=0x7f040020;
-        public static final int reflection_vs=0x7f040021;
-        public static final int texturedcube=0x7f040022;
-        public static final int toon_ps=0x7f040023;
-        public static final int toon_vs=0x7f040024;
+        public static final int number_polygons4=0x7f040019;
+        public static final int phong_ps=0x7f04001a;
+        public static final int phong_vs=0x7f04001b;
+        public static final int positive_x=0x7f04001c;
+        public static final int positive_y=0x7f04001d;
+        public static final int positive_z=0x7f04001e;
+        public static final int red_ps=0x7f04001f;
+        public static final int red_vs=0x7f040020;
+        public static final int reflection_ps=0x7f040021;
+        public static final int reflection_vs=0x7f040022;
+        public static final int texturedcube=0x7f040023;
+        public static final int toon_ps=0x7f040024;
+        public static final int toon_vs=0x7f040025;
     }
     public static final class string {
         public static final int app_name=0x7f050006;

@@ -41,14 +41,13 @@ class Renderer implements GLSurfaceView.Renderer {
 	// shader constants
 	private final int GOURAUD_SHADER = 0;
 	private final int PHONG_SHADER = 1;
-	private final int NORMALMAP_SHADER = 2;
-	private final int RED_SHADER = 3;
-	private final int TOON_SHADER = 4;
-	private final int FLAT_SHADER = 5;
-	private final int CUBEMAP_SHADER = 6;
+	private final int RED_SHADER = 2;
+	private final int TOON_SHADER = 3;
+	private final int FLAT_SHADER = 4;
+	private final int CUBEMAP_SHADER = 5;
 
 	// array of shaders
-	Shader _shaders[] = new Shader[7];
+	Shader _shaders[] = new Shader[6];
 	private int _currentShader;
 
 	// The objects
@@ -239,42 +238,11 @@ class Renderer implements GLSurfaceView.Renderer {
 			
 		}
 
-		// Texture info
-
-		// bind textures
-		/*
-		if (ob.hasTexture()) {// && enableTexture) {
-			// number of textures
-			int[] texIDs = ob.get_texID(); 
-			//GLES20.glBindTexture(GLES20.GL_TEXTURE_CUBE_MAP, texIDs[i]);
-			//IntBuffer texObj = null;
-			//GLES20.glGenTextures(1, texObj);
-			
-			for(int i = 0; i < _texIDs.length; i++) {
-				
-				GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + i);
-				GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texIDs[i]);
-				GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "texture" + (i+1)), i);
-			}
-		} */ 
-		
-		/*
-		if(ob.hasTexture())
-		{
-			// texture coordinates
-			_vb.position(TRIANGLE_VERTICES_DATA_TEX_OFFSET);
-			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "textureCoord"), 2, GLES20.GL_FLOAT, false,
-					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "textureCoord"));//GLES20.glEnableVertexAttribArray(shader.maTextureHandle);
-		} */
-		
 		// Draw with indices
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, _indices.length, GLES20.GL_UNSIGNED_SHORT, _ib);
 		
 		
 		checkGlError("glDrawElements");
-
-		/** END DRAWING OBJECT ***/
 		
 	}
 
@@ -297,7 +265,6 @@ class Renderer implements GLSurfaceView.Renderer {
 		try {
 			_shaders[GOURAUD_SHADER] = new Shader(R.raw.gouraud_vs,R.raw.gouraud_ps, mContext, false, 0); // gouraud
 			_shaders[PHONG_SHADER] = new Shader(R.raw.phong_vs, R.raw.phong_ps, mContext, false, 0); // phong
-			_shaders[NORMALMAP_SHADER] = new Shader(R.raw.normalmap_vs, R.raw.normalmap_ps, mContext, false, 0); // normal map
 			_shaders[RED_SHADER] = new Shader(R.raw.red_vs, R.raw.red_ps, mContext, false, 0);
 			_shaders[TOON_SHADER] = new Shader(R.raw.toon_vs, R.raw.toon_ps, mContext, false, 0);
 			_shaders[FLAT_SHADER] = new Shader(R.raw.flat_vs, R.raw.flat_ps, mContext, false, 0);
@@ -314,11 +281,6 @@ class Renderer implements GLSurfaceView.Renderer {
 		GLES20.glEnable( GLES20.GL_CULL_FACE );
 		GLES20.glCullFace(GLES20.GL_BACK); 
 
-				// setup textures for all objects
-		/*for(int i = 0; i < _objects.length; i++)
-			setupTextures(_objects[i]);
-		*/
-		 // Load the texture
         try {
 			mTextureId = createSimpleTextureCubemap ();
 		} catch (IOException e) {
@@ -350,72 +312,12 @@ class Renderer implements GLSurfaceView.Renderer {
 		this.phongShader = enable;
 	}
 	
-	public void enableNormalShader(boolean enable){
-		this.normalMapShader = enable;
-	}
-	
 	public void enableToonShader(boolean enable){
 		this.toonShader = enable;
 	}
 	
 	public void enableCubeMapShader(boolean enable){
 		this.cubeMapShader = enable;
-	}
-
-	/**
-	 * Sets up texturing for the object
-	 */
-	private void setupTextures(Object3D ob) {
-		
-		// create new texture ids if object has them
-		if (ob.hasTexture()) {
-			// number of textures
-			int[] texIDs = ob.get_texID();
-			int[] textures = new int[texIDs.length];
-			_texIDs = new int[texIDs.length];
-			// texture file ids
-			int[] texFiles = ob.getTexFile();
-
-			Log.d("TEXFILES LENGTH: ", texFiles.length + "");
-			GLES20.glGenTextures(texIDs.length, textures, 0);
-
-			for(int i = 0; i < texIDs.length; i++) {
-				texIDs[i] = textures[i];
-
-				GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texIDs[i]);
-
-				// parameters
-				GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
-						GLES20.GL_NEAREST);
-				GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-						GLES20.GL_TEXTURE_MAG_FILTER,
-						GLES20.GL_LINEAR);
-
-				GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,
-						GLES20.GL_REPEAT);
-				GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,
-						GLES20.GL_REPEAT);
-
-				InputStream is = mContext.getResources()
-				.openRawResource(texFiles[i]);
-				Bitmap bitmap;
-				try {
-					bitmap = BitmapFactory.decodeStream(is);
-				} finally {
-					try {
-						is.close();
-					} catch(IOException e) {
-						// Ignore.
-					}
-				}
-
-				// create it 
-				GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-				bitmap.recycle();
-				
-				Log.d("ATTACHING TEXTURES: ", "Attached " + i);
-			}
-		}
 	}
 	
 	private int createSimpleTextureCubemap( ) throws IOException

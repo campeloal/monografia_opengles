@@ -27,7 +27,7 @@ public class SplashActivity extends Activity {
         
         Thread background = new Thread() 
 		{
-			final Object3D[] _objects = new Object3D[4];
+			final Object3D[] _objects = new Object3D[5];
 			public void run() 
 			{
                 try 
@@ -36,8 +36,8 @@ public class SplashActivity extends Activity {
         			_objects[0] = new Object3D(R.raw.number_polygons0, false, context);
         			_objects[1] = new Object3D(R.raw.number_polygons1, false, context);
         			_objects[2] = new Object3D(R.raw.number_polygons2, false, context);
-        			//_objects[3] = new Object3D(R.raw.number_polygons0, false, context);
-        			_objects[3] = new Object3D(normalMapTextures, R.raw.texturedcube, true, context);
+        			_objects[3] = new Object3D(R.raw.number_polygons3, false, context);
+        			_objects[4] = new Object3D(R.raw.number_polygons4, false, context);
                 } catch (Exception e) 
                 {
                  
