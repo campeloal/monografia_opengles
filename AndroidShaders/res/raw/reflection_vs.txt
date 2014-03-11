@@ -1,7 +1,17 @@
 attribute vec4 aPosition;
-uniform mat4 uMVPMatrix;
+attribute vec3 aNormal; 
 
-void main(void)
-{
-    gl_Position = uMVPMatrix * aPosition;
+varying vec3 EyeDir;
+varying vec3 worldNormalDirection;
+varying vec3 Normal;
+
+uniform mat4 MVMatrix;
+uniform mat4 uMVPMatrix;
+uniform mat4 NMatrix;
+
+void main()              
+{                        
+   gl_Position = uMVPMatrix * aPosition; 
+   EyeDir=vec3(MVMatrix*aPosition);    
+   Normal = mat3(NMatrix) * aNormal;
 }

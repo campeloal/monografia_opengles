@@ -32,12 +32,11 @@ public class SplashActivity extends Activity {
 			{
                 try 
                 {
-                	int[] normalMapTextures = {R.raw.diffuse_old, R.raw.diffuse};
-        			_objects[0] = new Object3D(R.raw.number_polygons0, false, context);
-        			_objects[1] = new Object3D(R.raw.number_polygons1, false, context);
-        			_objects[2] = new Object3D(R.raw.number_polygons2, false, context);
-        			_objects[3] = new Object3D(R.raw.number_polygons3, false, context);
-        			_objects[4] = new Object3D(R.raw.number_polygons4, false, context);
+        			_objects[0] = new Object3D(R.raw.hand_1000, false, context);
+        			_objects[1] = new Object3D(R.raw.hand_2500, false, context);
+        			_objects[2] = new Object3D(R.raw.hand_5000, false, context);
+        			_objects[3] = new Object3D(R.raw.hand_10000, false, context);
+        			_objects[4] = new Object3D(R.raw.hand_15000, false, context);
                 } catch (Exception e) 
                 {
                  

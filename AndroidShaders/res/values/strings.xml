@@ -6,6 +6,7 @@
 	<string name="toon">Toon Shader</string>
 	<string name="flat">Flat Shader</string>
 	<string name="cubemap">Cube Map Shader</string>
+	<string name="reflection">Reflection Shader</string>
     <string name="app_name">Shader Performance</string>
     <string name="quit">Quit</string>
     

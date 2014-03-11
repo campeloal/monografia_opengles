@@ -45,9 +45,10 @@ class Renderer implements GLSurfaceView.Renderer {
 	private final int TOON_SHADER = 3;
 	private final int FLAT_SHADER = 4;
 	private final int CUBEMAP_SHADER = 5;
+	private final int REFLECTION_SHADER = 6;
 
 	// array of shaders
-	Shader _shaders[] = new Shader[6];
+	Shader _shaders[] = new Shader[7];
 	private int _currentShader;
 
 	// The objects
@@ -57,13 +58,14 @@ class Renderer implements GLSurfaceView.Renderer {
 	private int _currentObject;
 
 	// Modelview/Projection matrices
-	private float[] mMVPMatrix = new float[16];
+	private float[] mMVPMatrix = new float[16];		//modelviewprojection
 	private float[] mProjMatrix = new float[16];
 	private float[] mScaleMatrix = new float[16];   // scaling
 	private float[] mRotXMatrix = new float[16];	// rotation x
-	private float[] mRotYMatrix = new float[16];	// rotation x
-	private float[] mMMatrix = new float[16];		// rotation
-	private float[] mVMatrix = new float[16]; 		// modelview
+	private float[] mRotYMatrix = new float[16];	// rotation y
+	private float[] mMMatrix = new float[16];		// model
+	private float[] mVMatrix = new float[16]; 		// view
+	private float[] mMVMatrix = new float[16]; 		// modelview
 	private float[] normalMatrix = new float[16]; 	// modelview normal
 	private float[] invView = new float[16];
 
@@ -78,6 +80,7 @@ class Renderer implements GLSurfaceView.Renderer {
 	private boolean redShader = false;
 	private boolean toonShader = false;
 	private boolean cubeMapShader = false;
+	private boolean reflectionShader = false;
 
 	// light parameters
 	private float[] lightPos = {0.0f, 0.0f, 0.0f, 1};
@@ -160,8 +163,8 @@ class Renderer implements GLSurfaceView.Renderer {
 		float tempMatrix[] = new float[16]; 
 		Matrix.multiplyMM(tempMatrix, 0, mRotYMatrix, 0, mRotXMatrix, 0);		
 		Matrix.multiplyMM(mMMatrix, 0, mScaleMatrix, 0, tempMatrix, 0);
-		Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
-		Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);	
+		Matrix.multiplyMM(mMVMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+		Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVMatrix, 0);	
 		
 		// send to the shader
 		GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(_program, "uMVPMatrix"), 1, false, mMVPMatrix, 0);
@@ -237,6 +240,21 @@ class Renderer implements GLSurfaceView.Renderer {
 			GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "s_texture"), 0);
 			
 		}
+		
+		if(reflectionShader)
+		{
+			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
+					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
+			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
+			// Bind the texture
+	        GLES20.glActiveTexture ( GLES20.GL_TEXTURE0 );
+	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_CUBE_MAP, mTextureId );
+			GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "s_texture"), 0);
+			// send to the shader
+			//GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(_program, "MMatrix"), 1, false, mMMatrix, 0);
+			GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(_program, "MVMatrix"), 1, false, mMVMatrix, 0);
+			GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(_program, "NMatrix"), 1, false, normalMatrix, 0);
+		}
 
 		// Draw with indices
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, _indices.length, GLES20.GL_UNSIGNED_SHORT, _ib);
@@ -269,6 +287,7 @@ class Renderer implements GLSurfaceView.Renderer {
 			_shaders[TOON_SHADER] = new Shader(R.raw.toon_vs, R.raw.toon_ps, mContext, false, 0);
 			_shaders[FLAT_SHADER] = new Shader(R.raw.flat_vs, R.raw.flat_ps, mContext, false, 0);
 			_shaders[CUBEMAP_SHADER] = new Shader(R.raw.cubemap_vs, R.raw.cubmap_ps, mContext, false, 0);
+			_shaders[REFLECTION_SHADER] = new Shader(R.raw.reflection_vs, R.raw.reflection_ps, mContext, false, 0);
 		} catch (Exception e) {
 			Log.d("SHADER 0 SETUP", e.getLocalizedMessage());
 		}
@@ -318,6 +337,10 @@ class Renderer implements GLSurfaceView.Renderer {
 	
 	public void enableCubeMapShader(boolean enable){
 		this.cubeMapShader = enable;
+	}
+	
+	public void enableReflectionShader(boolean enable){
+		this.reflectionShader = enable;
 	}
 	
 	private int createSimpleTextureCubemap( ) throws IOException

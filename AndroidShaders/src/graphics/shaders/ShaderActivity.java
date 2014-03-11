@@ -163,6 +163,7 @@ public void decPolygons(){
 			renderer.enableRedShader(false);
 			renderer.enableToonShader(false);
 			renderer.enableCubeMapShader(false);
+			renderer.enableReflectionShader(false);
 			return true;
 		case R.id.phong: 			// Phong Shading
 			renderer.setShader(this.PHONG_SHADER);
@@ -171,6 +172,7 @@ public void decPolygons(){
 			renderer.enableRedShader(false);
 			renderer.enableToonShader(false);
 			renderer.enableCubeMapShader(false);
+			renderer.enableReflectionShader(false);
 			return true;
 		case R.id.flat:
 			renderer.setShader(this.FLAT_SHADER);
@@ -179,6 +181,7 @@ public void decPolygons(){
 			renderer.enableRedShader(false);
 			renderer.enableToonShader(false);
 			renderer.enableCubeMapShader(false);
+			renderer.enableReflectionShader(false);
 			return true;
 		case R.id.red:
 			renderer.setShader(this.RED_SHADER);
@@ -187,6 +190,7 @@ public void decPolygons(){
 			renderer.enableRedShader(true);
 			renderer.enableToonShader(false);
 			renderer.enableCubeMapShader(false);
+			renderer.enableReflectionShader(false);
 			return true;
 		case R.id.toon:
 			renderer.setShader(this.TOON_SHADER);
@@ -195,6 +199,7 @@ public void decPolygons(){
 			renderer.enableRedShader(false);
 			renderer.enableToonShader(true);
 			renderer.enableCubeMapShader(false);
+			renderer.enableReflectionShader(false);
 			return true;
 		case R.id.cubemap:
 			renderer.setShader(this.CUBEMAP_SHADER);
@@ -203,6 +208,16 @@ public void decPolygons(){
 			renderer.enableRedShader(false);
 			renderer.enableToonShader(false);
 			renderer.enableCubeMapShader(true);
+			renderer.enableReflectionShader(false);
+			return true;
+		case R.id.reflection:
+			renderer.setShader(this.REFLECTION_SHADER);
+			renderer.enableGouraudShader(false);
+			renderer.enablePhongShader(false);
+			renderer.enableRedShader(false);
+			renderer.enableToonShader(false);
+			renderer.enableCubeMapShader(false);
+			renderer.enableReflectionShader(true);
 			return true;
 		case R.id.quit:				// Quit the program
 			quit();
@@ -301,6 +316,7 @@ public void decPolygons(){
 	private final int TOON_SHADER = 3;
 	private final int FLAT_SHADER = 4;
 	private final int CUBEMAP_SHADER = 5;
+	private final int REFLECTION_SHADER = 6;
 
 	//private final int POLYGON_3 = 3;
 	private int CURRENT_POLYGON = 0;
