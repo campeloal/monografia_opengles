@@ -5,6 +5,7 @@
     <item android:id="@+id/red" android:title="@+string/red"></item>
     <item android:id="@+id/toon" android:title="@+string/toon"></item>
     <item android:id="@+id/flat" android:title="@+string/flat"></item>
+    <item android:id="@+id/simpletex" android:title="@+string/simpletex"></item>
     <item android:id="@+id/cubemap" android:title="@+string/cubemap"></item>
     <item android:id="@+id/reflection" android:title="@+string/reflection"></item>
     <item android:id="@+id/quit"
