@@ -28,6 +28,7 @@ class Renderer implements GLSurfaceView.Renderer {
 	/******************************
 	 * PROPERTIES
 	 ******************************/
+	int[] texIDs;
 	// rotation 
 	public float mAngleX;
 	public float mAngleY;
@@ -96,7 +97,8 @@ class Renderer implements GLSurfaceView.Renderer {
 
 	Dialog loader_dialog;
 
-	private int reflectText, cubeMapText, simpleText;
+	private int reflectText, cubeMapText, currentText = 0;
+	private int[] simpleTexts;
 
 	private Context mContext;
 	private static String TAG = "Renderer";
@@ -205,6 +207,19 @@ class Renderer implements GLSurfaceView.Renderer {
 			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
 					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
 			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
+			
+			for(int i = 0; i < _texIDs.length; i++) {
+				GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + i);
+				Log.d("TEXTURE BIND: ", i + " " + texIDs[i]);
+				GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texIDs[i]);
+				GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "texture" + (i+1)), i);
+			}
+			// texture coordinates
+			_vb.position(TRIANGLE_VERTICES_DATA_TEX_OFFSET);
+			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "textureCoord")/*shader.maTextureHandle*/, 2, GLES20.GL_FLOAT, false,
+					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
+			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "textureCoord"));//GLES20.glEnableVertexAttribArray(shader.maTextureHandle);
+			
 		}
 		
 		if(_shaders[TOON_SHADER].isActivated())
@@ -250,14 +265,14 @@ class Renderer implements GLSurfaceView.Renderer {
 		if(_shaders[TEXTURE_SHADER].isActivated())
 		{
 			// Bind the texture
-	        GLES20.glActiveTexture ( GLES20.GL_TEXTURE0 );
-	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, simpleText );
+			GLES20.glActiveTexture ( GLES20.GL_TEXTURE0 );
+	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, simpleTexts[currentText] );
 			GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "texture"), 0);
 			
-			//_vb.position(TRIANGLE_VERTICES_DATA_TEX_OFFSET);
-			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "textCoords"), 2, GLES20.GL_FLOAT, false,
+			_vb.position(TRIANGLE_VERTICES_DATA_TEX_OFFSET);
+			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "textCoord"), 2, GLES20.GL_FLOAT, false,
 					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "textCoords"));
+			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "textCoord"));
 			
 		}
 
@@ -310,11 +325,15 @@ class Renderer implements GLSurfaceView.Renderer {
         try {
 			reflectText = createSimpleTextureCubemap (R.raw.left,R.raw.right,R.raw.bottom,R.raw.top,R.raw.back,R.raw.front);
 			cubeMapText = createSimpleTextureCubemap (R.raw.negative_x,R.raw.positive_x,R.raw.negative_y,R.raw.positive_y,R.raw.negative_z,R.raw.positive_z);
-			simpleText = createSimpleTexture();
+			simpleTexts = createSimpleTexture();
         } catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+        
+     // setup textures for all objects
+     		for(int i = 0; i < _objects.length; i++)
+     			setupTextures(_objects[i]);
 
 		// set the view matrix
 		Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5.0f, 0.0f, 0f, 0f, 0f, 1.0f, 0.0f);
@@ -332,26 +351,34 @@ class Renderer implements GLSurfaceView.Renderer {
 		this._shaders[shader].setIsActivated(isActivated);
 	}
 	
-	private int createSimpleTexture(){
+	private int[] createSimpleTexture(){
 		// Texture object handle
-        int[] textureId = new int[1];
+        int[] textureId = new int[5];
+        int[] texFiles = {R.raw.texture_1000, R.raw.texture_2500, R.raw.texture_5000,
+        		R.raw.texture_10000, R.raw.texture_15000};
 
-        InputStream is = mContext.getResources().openRawResource(R.raw.tex);
-        Bitmap tex = BitmapFactory.decodeStream(is);
-        
         //  Generate a texture object
-        GLES20.glGenTextures ( 1, textureId, 0 );
-        // Bind the texture object
-        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, textureId[0] );
-
-        //  Load the texture
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, tex, 0);
-
-        // Set the filtering mode
-        GLES20.glTexParameteri ( GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST );
-        GLES20.glTexParameteri ( GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST );
-
-        return textureId[0];
+        GLES20.glGenTextures ( 5, textureId, 0 );
+        
+        for(int i=0; i < 5; i++)
+        {
+	        // Bind the texture object
+	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, textureId[i] );
+	        
+	        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_NEAREST);
+			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_LINEAR);
+			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,GLES20.GL_REPEAT);
+			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,GLES20.GL_REPEAT);
+			
+			InputStream is = mContext.getResources().openRawResource(texFiles[i]);
+	        Bitmap texture = BitmapFactory.decodeStream(is);
+	
+	        //  Load the texture
+	        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, texture, 0);
+	        texture.recycle();
+        }
+      
+        return textureId;
 	}
 	
 	private int createSimpleTextureCubemap(int n_x, int p_x, int n_y, int p_y, int n_z, int p_z ) throws IOException
@@ -404,6 +431,57 @@ class Renderer implements GLSurfaceView.Renderer {
 
         return textureId[0];
     }
+	
+	private void setupTextures(Object3D ob) {
+		// create new texture ids if object has them
+		int[] texFiles = {R.raw.diffuse_old, R.raw.diffusenormalmap_deepbig};
+		texIDs = new int[texFiles.length];
+		int[] textures = new int[texIDs.length];
+		_texIDs = new int[texIDs.length];
+		// texture file ids
+	
+		Log.d("TEXFILES LENGTH: ", texFiles.length + "");
+		GLES20.glGenTextures(texIDs.length, textures, 0);
+	
+		for(int i = 0; i < texIDs.length; i++) {
+			texIDs[i] = textures[i];
+	
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texIDs[i]);
+	
+			// parameters
+			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
+					GLES20.GL_NEAREST);
+			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
+					GLES20.GL_TEXTURE_MAG_FILTER,
+					GLES20.GL_LINEAR);
+	
+			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,
+					GLES20.GL_REPEAT);
+			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,
+					GLES20.GL_REPEAT);
+	
+			InputStream is = mContext.getResources()
+			.openRawResource(texFiles[i]);
+			Bitmap bitmap;
+			try {
+				bitmap = BitmapFactory.decodeStream(is);
+			} finally {
+				try {
+					is.close();
+				} catch(IOException e) {
+					// Ignore.
+				}
+			}
+	
+			// create it 
+			GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+			bitmap.recycle();
+	
+			Log.d("ATTACHING TEXTURES: ", "Attached " + i);
+		}
+		
+	}
+
 
 
 	/**
@@ -426,6 +504,10 @@ class Renderer implements GLSurfaceView.Renderer {
 		}
 	}
 	
+	public void setCurrentText(int currentText)
+	{
+		this.currentText = currentText;
+	}
 	
 
 } 

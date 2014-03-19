@@ -32,7 +32,7 @@ public class SplashActivity extends Activity {
 			{
                 try 
                 {
-        			_objects[0] = new Object3D(R.raw.tex_cube, context);
+        			_objects[0] = new Object3D(R.raw.hand_1000_tex, context);
         			_objects[1] = new Object3D(R.raw.hand_2500_tex, context);
         			_objects[2] = new Object3D(R.raw.hand_5000_tex, context);
         			_objects[3] = new Object3D(R.raw.hand_10000_tex, context);
