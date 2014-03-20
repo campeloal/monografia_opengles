@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.util.ArrayList;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -208,18 +209,6 @@ class Renderer implements GLSurfaceView.Renderer {
 					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
 			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
 			
-			for(int i = 0; i < _texIDs.length; i++) {
-				GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + i);
-				Log.d("TEXTURE BIND: ", i + " " + texIDs[i]);
-				GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texIDs[i]);
-				GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "texture" + (i+1)), i);
-			}
-			// texture coordinates
-			_vb.position(TRIANGLE_VERTICES_DATA_TEX_OFFSET);
-			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "textureCoord")/*shader.maTextureHandle*/, 2, GLES20.GL_FLOAT, false,
-					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "textureCoord"));//GLES20.glEnableVertexAttribArray(shader.maTextureHandle);
-			
 		}
 		
 		if(_shaders[TOON_SHADER].isActivated())
@@ -321,19 +310,14 @@ class Renderer implements GLSurfaceView.Renderer {
 		// cull backface
 		GLES20.glEnable( GLES20.GL_CULL_FACE );
 		GLES20.glCullFace(GLES20.GL_BACK); 
+		
+		Resources r = Resources.getInstance();
+		Bitmap cubeMap[] = r.getCubeMapText();
+		Bitmap reflect[] = r.getReflectText();
 
-        try {
-			reflectText = createSimpleTextureCubemap (R.raw.left,R.raw.right,R.raw.bottom,R.raw.top,R.raw.back,R.raw.front);
-			cubeMapText = createSimpleTextureCubemap (R.raw.negative_x,R.raw.positive_x,R.raw.negative_y,R.raw.positive_y,R.raw.negative_z,R.raw.positive_z);
-			simpleTexts = createSimpleTexture();
-        } catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        
-     // setup textures for all objects
-     		for(int i = 0; i < _objects.length; i++)
-     			setupTextures(_objects[i]);
+		reflectText = createCubeMapTexture(reflect);
+		cubeMapText = createCubeMapTexture(cubeMap);
+		simpleTexts = createSimpleTexture();
 
 		// set the view matrix
 		Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5.0f, 0.0f, 0f, 0f, 0f, 1.0f, 0.0f);
@@ -354,54 +338,34 @@ class Renderer implements GLSurfaceView.Renderer {
 	private int[] createSimpleTexture(){
 		// Texture object handle
         int[] textureId = new int[5];
-        int[] texFiles = {R.raw.texture_1000, R.raw.texture_2500, R.raw.texture_5000,
-        		R.raw.texture_10000, R.raw.texture_15000};
 
         //  Generate a texture object
         GLES20.glGenTextures ( 5, textureId, 0 );
+        
+        Resources r = Resources.getInstance();
         
         for(int i=0; i < 5; i++)
         {
 	        // Bind the texture object
 	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, textureId[i] );
-	        
+
 	        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_NEAREST);
 			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_LINEAR);
 			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,GLES20.GL_REPEAT);
 			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,GLES20.GL_REPEAT);
-			
-			InputStream is = mContext.getResources().openRawResource(texFiles[i]);
-	        Bitmap texture = BitmapFactory.decodeStream(is);
-	
+
 	        //  Load the texture
-	        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, texture, 0);
-	        texture.recycle();
+	        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, r.getSimpleTexts()[i], 0);
         }
       
         return textureId;
 	}
 	
-	private int createSimpleTextureCubemap(int n_x, int p_x, int n_y, int p_y, int n_z, int p_z ) throws IOException
+	private int createCubeMapTexture(Bitmap[] cubeMap)
     {
-		
-		
-		Bitmap positiveX,negativeX,positiveY,negativeY,positiveZ,negativeZ;
-		InputStream is = mContext.getResources().openRawResource(p_x);
-		positiveX = BitmapFactory.decodeStream(is);
-		is = mContext.getResources().openRawResource(n_x);
-		negativeX = BitmapFactory.decodeStream(is);
-		is = mContext.getResources().openRawResource(p_y);
-		positiveY = BitmapFactory.decodeStream(is);
-		is = mContext.getResources().openRawResource(n_y);
-		negativeY = BitmapFactory.decodeStream(is);
-		is = mContext.getResources().openRawResource(p_z);
-		positiveZ = BitmapFactory.decodeStream(is);
-		is = mContext.getResources().openRawResource(n_z);
-		negativeZ = BitmapFactory.decodeStream(is);
-		is.close();
 
-		int[] textureId = new int[1];
-                    
+		int[] textureId = new int[1];		
+		
         // Generate a texture object
         GLES20.glGenTextures ( 1, textureId, 0 );
 
@@ -409,21 +373,22 @@ class Renderer implements GLSurfaceView.Renderer {
         GLES20.glBindTexture ( GLES20.GL_TEXTURE_CUBE_MAP, textureId[0] );
     
         // Load the cube face - Positive X
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, positiveX, 0);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, cubeMap[1], 0);
 
         // Load the cube face - Negative X
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, negativeX, 0);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, cubeMap[0], 0);
+        
         // Load the cube face - Positive Y
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, positiveY, 0);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, cubeMap[3], 0);
 
         // Load the cube face - Negative Y
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, negativeY, 0);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, cubeMap[2], 0);
 
         // Load the cube face - Positive Z
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, positiveZ, 0);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, cubeMap[5], 0);
 
         // Load the cube face - Negative Z
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, negativeZ, 0);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, cubeMap[4], 0);
 
         // Set the filtering mode
         GLES20.glTexParameteri ( GLES20.GL_TEXTURE_CUBE_MAP, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST );
@@ -432,58 +397,6 @@ class Renderer implements GLSurfaceView.Renderer {
         return textureId[0];
     }
 	
-	private void setupTextures(Object3D ob) {
-		// create new texture ids if object has them
-		int[] texFiles = {R.raw.diffuse_old, R.raw.diffusenormalmap_deepbig};
-		texIDs = new int[texFiles.length];
-		int[] textures = new int[texIDs.length];
-		_texIDs = new int[texIDs.length];
-		// texture file ids
-	
-		Log.d("TEXFILES LENGTH: ", texFiles.length + "");
-		GLES20.glGenTextures(texIDs.length, textures, 0);
-	
-		for(int i = 0; i < texIDs.length; i++) {
-			texIDs[i] = textures[i];
-	
-			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texIDs[i]);
-	
-			// parameters
-			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
-					GLES20.GL_NEAREST);
-			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-					GLES20.GL_TEXTURE_MAG_FILTER,
-					GLES20.GL_LINEAR);
-	
-			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,
-					GLES20.GL_REPEAT);
-			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,
-					GLES20.GL_REPEAT);
-	
-			InputStream is = mContext.getResources()
-			.openRawResource(texFiles[i]);
-			Bitmap bitmap;
-			try {
-				bitmap = BitmapFactory.decodeStream(is);
-			} finally {
-				try {
-					is.close();
-				} catch(IOException e) {
-					// Ignore.
-				}
-			}
-	
-			// create it 
-			GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-			bitmap.recycle();
-	
-			Log.d("ATTACHING TEXTURES: ", "Attached " + i);
-		}
-		
-	}
-
-
-
 	/**
 	 * Scaling
 	 */
