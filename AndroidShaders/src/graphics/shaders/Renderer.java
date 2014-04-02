@@ -3,14 +3,15 @@ package graphics.shaders;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 
+import javax.microedition.khronos.egl.EGL;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Dialog;
@@ -18,6 +19,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
@@ -102,6 +104,12 @@ class Renderer implements GLSurfaceView.Renderer {
 	private int[] simpleTexts;
 
 	private Context mContext;
+	
+	//Measuring the performance
+	NativeLib nativeLib;
+	int finalTime;
+	int accumulatedTime;
+	int measures;
 	private static String TAG = "Renderer";
 
 	/***************************
@@ -118,6 +126,10 @@ class Renderer implements GLSurfaceView.Renderer {
 		//set current object and shader
 		_currentShader = this.GOURAUD_SHADER;
 		_currentObject = 0;
+		nativeLib = new NativeLib();
+		finalTime = 0;
+		accumulatedTime =0;
+		measures = 0;
 	}
 
 	/*****************************
@@ -173,6 +185,7 @@ class Renderer implements GLSurfaceView.Renderer {
 		FloatBuffer _vb = ob.get_vb();
 		ShortBuffer _ib = ob.get_ib();
 		short[] _indices = ob.get_indices();
+		
 		
 		// Vertex buffer
 
@@ -265,10 +278,32 @@ class Renderer implements GLSurfaceView.Renderer {
 			
 		}
 
+		
+		ByteBuffer bb = ByteBuffer.allocateDirect(8);
+        bb.order(ByteOrder.nativeOrder());
+        IntBuffer ib = bb.asIntBuffer();
+		long elapsed_time;
+		
+		
+		if(measures < 10)
+		{
+			nativeLib.startGPUTime();
+		}
 		// Draw with indices
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, _indices.length, GLES20.GL_UNSIGNED_SHORT, _ib);
-		
-		
+		if(measures < 10)
+		{
+			nativeLib.stopGPUTime();
+			accumulatedTime += nativeLib.getTime();
+			measures++;
+			if(measures == 10)
+			{
+				finalTime = accumulatedTime/10;
+			}
+		}
+
+		System.out.println("TIME " + finalTime);
+	
 		checkGlError("glDrawElements");
 		
 	}
@@ -310,6 +345,7 @@ class Renderer implements GLSurfaceView.Renderer {
 		// cull backface
 		GLES20.glEnable( GLES20.GL_CULL_FACE );
 		GLES20.glCullFace(GLES20.GL_BACK); 
+		GLES20.glFrontFace(GLES20.GL_CCW);
 		
 		Resources r = Resources.getInstance();
 		Bitmap cubeMap[] = r.getCubeMapText();
@@ -320,7 +356,8 @@ class Renderer implements GLSurfaceView.Renderer {
 		simpleTexts = createSimpleTexture();
 
 		// set the view matrix
-		Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5.0f, 0.0f, 0f, 0f, 0f, 1.0f, 0.0f);
+		Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5.0f, 0.0f, 0f, 0f, 0f, 1.0f, 0.0f);		
+				
 	}
 
 	public void setShader(int shader) {
@@ -420,6 +457,12 @@ class Renderer implements GLSurfaceView.Renderer {
 	public void setCurrentText(int currentText)
 	{
 		this.currentText = currentText;
+	}
+	
+	public void restartTimer(){
+		accumulatedTime = 0;
+		finalTime = 0;
+		measures = 0;
 	}
 	
 

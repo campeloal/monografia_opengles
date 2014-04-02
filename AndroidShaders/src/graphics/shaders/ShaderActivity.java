@@ -89,6 +89,7 @@ public class ShaderActivity extends Activity {
 			    else if (event.getAction() == MotionEvent.ACTION_UP) {
 			    	add.setBackground(draw_add);
 			    	addPolygons();
+			    	renderer.restartTimer();
 			    }
 
 			    return true;
@@ -105,6 +106,7 @@ public class ShaderActivity extends Activity {
 			    else if (event.getAction() == MotionEvent.ACTION_UP) {
 			    	dec.setBackground(draw_dec);
 			    	decPolygons();
+			    	renderer.restartTimer();
 			    }
 
 			    return true;
@@ -168,6 +170,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.restartTimer();
 			return true;
 		case R.id.phong: 			// Phong Shading
 			renderer.setShader(this.PHONG_SHADER);
@@ -179,6 +182,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.restartTimer();
 			return true;
 		case R.id.flat:
 			renderer.setShader(this.FLAT_SHADER);
@@ -190,6 +194,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.restartTimer();
 			return true;
 		case R.id.red:
 			renderer.setShader(this.RED_SHADER);
@@ -201,6 +206,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.restartTimer();
 			return true;
 		case R.id.toon:
 			renderer.setShader(this.TOON_SHADER);
@@ -212,6 +218,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.restartTimer();
 			return true;
 		case R.id.cubemap:
 			renderer.setShader(this.CUBEMAP_SHADER);
@@ -223,6 +230,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, true);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.restartTimer();
 			return true;
 		case R.id.reflection:
 			renderer.setShader(this.REFLECTION_SHADER);
@@ -234,6 +242,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, true);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.restartTimer();
 			return true;
 		case R.id.simpletex:
 			renderer.setShader(this.TEXTURE_SHADER);
@@ -245,6 +254,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, true);
+			renderer.restartTimer();
 			return true;
 		case R.id.quit:				// Quit the program
 			quit();
