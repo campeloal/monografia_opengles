@@ -5,9 +5,9 @@ import android.graphics.Bitmap;
 public class Resources {
 
 	Object3D[] _objects;
-	Bitmap reflectText[] = new Bitmap[6];
-	Bitmap cubeMapText[] = new Bitmap[6];
-	Bitmap simpleTexts[] = new Bitmap[5];
+	Bitmap[] reflectText;
+	Bitmap[] cubeMapText;
+	Bitmap[] simpleTexts;
 	private static Resources instance;
 	
 	private Resources(){

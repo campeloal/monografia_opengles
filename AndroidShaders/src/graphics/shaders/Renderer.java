@@ -1,31 +1,27 @@
 package graphics.shaders;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.util.ArrayList;
-
-import javax.microedition.khronos.egl.EGL;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+
+import shaders.CubeMapShader;
+import shaders.FlatShader;
+import shaders.GouraudShader;
+import shaders.PhongShader;
+import shaders.RedShader;
+import shaders.ReflectionShader;
+import shaders.Shader;
+import shaders.TextureShader;
+import shaders.ToonShader;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
-import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
-import android.os.Build;
 import android.util.Log;
-import android.widget.Toast;
 
 class Renderer implements GLSurfaceView.Renderer {
 	/******************************
@@ -57,7 +53,7 @@ class Renderer implements GLSurfaceView.Renderer {
 	private int _currentShader;
 
 	// The objects
-	Object3D[] _objects = new Object3D[5];
+	Object3D[] _objects;
 
 	// current object
 	private int _currentObject;
@@ -98,8 +94,8 @@ class Renderer implements GLSurfaceView.Renderer {
 	float scaleY = 1.0f;
 	float scaleZ = 1.0f;
 
-	Dialog loader_dialog;
 
+	private final int numTex;
 	private int reflectText, cubeMapText, currentText = 0;
 	private int[] simpleTexts;
 
@@ -110,6 +106,7 @@ class Renderer implements GLSurfaceView.Renderer {
 	int finalTime;
 	int accumulatedTime;
 	int measures;
+	boolean queryStarted = false;
 	private static String TAG = "Renderer";
 
 	/***************************
@@ -122,6 +119,7 @@ class Renderer implements GLSurfaceView.Renderer {
 		
 		Resources r = Resources.getInstance();
 		this._objects = r.getObjects();
+		numTex = _objects.length;
 
 		//set current object and shader
 		_currentShader = this.GOURAUD_SHADER;
@@ -195,112 +193,63 @@ class Renderer implements GLSurfaceView.Renderer {
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
 		GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aPosition"));
 		
-		if(_shaders[this.GOURAUD_SHADER].isActivated() || _shaders[PHONG_SHADER].isActivated())
+		if(_shaders[this.GOURAUD_SHADER].isActivated())
 		{
-			// send to the shader
-			GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(_program, "normalMatrix"), 1, false, mMVPMatrix, 0);
 			
-			// lighting variables
-			// send to shaders
-			GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "lightPos"), 1, lightPos, 0);
-			GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "lightColor"), 1, lightColor, 0);
-			
-			
-			// material 
-			GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "matAmbient"), 1, matAmbient, 0);
-			GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "matDiffuse"), 1, matDiffuse, 0);
-			GLES20.glUniform4fv(GLES20.glGetUniformLocation(_program, "matSpecular"), 1, matSpecular, 0);
-			GLES20.glUniform1f(GLES20.glGetUniformLocation(_program, "matShininess"), matShininess);
-			
-			// eye position
-			GLES20.glUniform3fv(GLES20.glGetUniformLocation(_program, "eyePos")/*shader.eyeHandle*/, 1, eyePos, 0);
-			// enable texturing? [fix - sending float is waste]
-			GLES20.glUniform1f(GLES20.glGetUniformLocation(_program, "hasTexture")/*shader.hasTextureHandle*/, false && enableTexture ? 2.0f : 0.0f);
-			// the normal info
-			_vb.position(TRIANGLE_VERTICES_DATA_NOR_OFFSET);
-			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
-					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
-			
+			((GouraudShader) _shaders[this.GOURAUD_SHADER]).initShaderParams(_program, _vb,mMVPMatrix, lightPos, lightColor, matAmbient, 
+			matSpecular, matDiffuse, matShininess, eyePos);
+		}
+		
+		if(_shaders[this.PHONG_SHADER].isActivated())
+		{
+			((PhongShader) _shaders[this.PHONG_SHADER]).initShaderParams(_program, _vb,mMVPMatrix, lightPos, lightColor, matAmbient, 
+					matSpecular, matDiffuse, matShininess, eyePos);
 		}
 		
 		if(_shaders[TOON_SHADER].isActivated())
 		{
-			int loc = GLES20.glGetUniformLocation(_program, "lightDir");
-			GLES20.glUniform3fv(loc, 1, lightDir,0);
-			// the normal info
-			//_vb.position(TRIANGLE_VERTICES_DATA_NOR_OFFSET);
-			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
-					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
+			((ToonShader) _shaders[this.TOON_SHADER]).initShaderParams(_program, _vb, lightDir);
 		}
 		
 		if(_shaders[CUBEMAP_SHADER].isActivated())
 		{
-			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
-					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
-			// Bind the texture
-	        GLES20.glActiveTexture ( GLES20.GL_TEXTURE0 );
-	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_CUBE_MAP, cubeMapText );
-			GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "s_texture"), 0);
 			
+			((CubeMapShader) _shaders[this.CUBEMAP_SHADER]).initShaderParams(_program, _vb, cubeMapText);
 		}
 		
 		if(_shaders[REFLECTION_SHADER].isActivated())
 		{
-			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
-					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
-			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
-					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
-			// Bind the texture
-	        GLES20.glActiveTexture ( GLES20.GL_TEXTURE0 );
-	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_CUBE_MAP, reflectText );
-	        // send to the shader
-			GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "s_texture"), 0);
-			GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(_program, "MVMatrix"), 1, false, mMVMatrix, 0);
-			GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(_program, "NMatrix"), 1, false, normalMatrix, 0);
+			((ReflectionShader) _shaders[this.REFLECTION_SHADER]).initShaderParams(_program, _vb, reflectText, mMVMatrix, normalMatrix);
 		}
 		
 		if(_shaders[TEXTURE_SHADER].isActivated())
 		{
-			// Bind the texture
-			GLES20.glActiveTexture ( GLES20.GL_TEXTURE0 );
-	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, simpleTexts[currentText] );
-			GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "texture"), 0);
-			
-			_vb.position(TRIANGLE_VERTICES_DATA_TEX_OFFSET);
-			GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "textCoord"), 2, GLES20.GL_FLOAT, false,
-					TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-			GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "textCoord"));
+			((TextureShader) _shaders[this.TEXTURE_SHADER]).initShaderParams(_program, _vb, simpleTexts, currentText);
 			
 		}
 
 		
-		ByteBuffer bb = ByteBuffer.allocateDirect(8);
-        bb.order(ByteOrder.nativeOrder());
-        IntBuffer ib = bb.asIntBuffer();
 		long elapsed_time;
 		
 		
-		if(measures < 10)
+		/*if(measures < 10)
 		{
 			nativeLib.startGPUTime();
-		}
+			queryStarted = true;
+		} */
 		// Draw with indices
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, _indices.length, GLES20.GL_UNSIGNED_SHORT, _ib);
-		if(measures < 10)
+		/*if((measures < 10) && (queryStarted == true))
 		{
 			nativeLib.stopGPUTime();
 			accumulatedTime += nativeLib.getTime();
 			measures++;
+			queryStarted = false;
 			if(measures == 10)
 			{
 				finalTime = accumulatedTime/10;
 			}
-		}
+		}*/
 
 		System.out.println("TIME " + finalTime);
 	
@@ -325,14 +274,23 @@ class Renderer implements GLSurfaceView.Renderer {
 		
 		// initialize shaders
 		try {
-			_shaders[GOURAUD_SHADER] = new Shader(R.raw.gouraud_vs,R.raw.gouraud_ps, mContext); // gouraud
-			_shaders[PHONG_SHADER] = new Shader(R.raw.phong_vs, R.raw.phong_ps, mContext); // phong
-			_shaders[RED_SHADER] = new Shader(R.raw.red_vs, R.raw.red_ps, mContext);
-			_shaders[TOON_SHADER] = new Shader(R.raw.toon_vs, R.raw.toon_ps, mContext);
-			_shaders[FLAT_SHADER] = new Shader(R.raw.flat_vs, R.raw.flat_ps, mContext);
-			_shaders[CUBEMAP_SHADER] = new Shader(R.raw.cubemap_vs, R.raw.cubmap_ps, mContext);
-			_shaders[REFLECTION_SHADER] = new Shader(R.raw.reflection_vs, R.raw.reflection_ps, mContext);
-			_shaders[TEXTURE_SHADER] = new Shader(R.raw.simple_tex_vs, R.raw.simple_tex_ps, mContext);
+			_shaders[GOURAUD_SHADER] = new GouraudShader(); 
+			_shaders[GOURAUD_SHADER].readShader(mContext);
+			_shaders[PHONG_SHADER] = new PhongShader();
+			_shaders[PHONG_SHADER].readShader(mContext);
+			_shaders[RED_SHADER] = new RedShader();
+			_shaders[RED_SHADER].readShader(mContext);
+			_shaders[TOON_SHADER] = new ToonShader();
+			_shaders[TOON_SHADER].readShader(mContext);
+			_shaders[FLAT_SHADER] = new FlatShader();
+			_shaders[FLAT_SHADER].readShader(mContext);
+			_shaders[CUBEMAP_SHADER] = new CubeMapShader();
+			_shaders[CUBEMAP_SHADER].readShader(mContext);
+			_shaders[REFLECTION_SHADER] = new ReflectionShader();
+			_shaders[REFLECTION_SHADER].readShader(mContext);
+			_shaders[TEXTURE_SHADER] = new TextureShader();
+			_shaders[TEXTURE_SHADER].readShader(mContext);
+			
 			_shaders[_currentShader].setIsActivated(true);
 		} catch (Exception e) {
 			Log.d("SHADER 0 SETUP", e.getLocalizedMessage());
@@ -374,14 +332,14 @@ class Renderer implements GLSurfaceView.Renderer {
 	
 	private int[] createSimpleTexture(){
 		// Texture object handle
-        int[] textureId = new int[5];
+        int[] textureId = new int[numTex];
 
         //  Generate a texture object
-        GLES20.glGenTextures ( 5, textureId, 0 );
+        GLES20.glGenTextures ( numTex, textureId, 0 );
         
         Resources r = Resources.getInstance();
         
-        for(int i=0; i < 5; i++)
+        for(int i=0; i < numTex; i++)
         {
 	        // Bind the texture object
 	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, textureId[i] );
@@ -463,6 +421,7 @@ class Renderer implements GLSurfaceView.Renderer {
 		accumulatedTime = 0;
 		finalTime = 0;
 		measures = 0;
+		queryStarted = false;
 	}
 	
 

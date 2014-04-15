@@ -22,7 +22,8 @@ public class SplashActivity extends Activity {
     private View mLoadingView;
     private int mShortAnimationDuration;
     int[] texFiles = {R.raw.texture_1000, R.raw.texture_2500, R.raw.texture_5000,
-    		R.raw.texture_10000, R.raw.texture_15000};
+    		R.raw.texture_10000, R.raw.texture_15000,R.raw.texture_15000,R.raw.texture_15000,R.raw.texture_15000};
+    final Object3D[] _objects = new Object3D[5];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,19 +38,19 @@ public class SplashActivity extends Activity {
         
         Thread background = new Thread() 
 		{
-			final Object3D[] _objects = new Object3D[5];
-			Bitmap[] cubeMap = new Bitmap[5];
-			Bitmap[] reflect = new Bitmap[5];
+			Bitmap[] cubeMap;
+			Bitmap[] reflect;
 			
 			public void run() 
 			{
                 try 
                 {
-        			_objects[0] = new Object3D(R.raw.hand_1000_tex, context);
-        			_objects[1] = new Object3D(R.raw.hand_2500_tex, context);
-        			_objects[2] = new Object3D(R.raw.hand_5000_tex, context);
-        			_objects[3] = new Object3D(R.raw.hand_10000_tex, context);
-        			_objects[4] = new Object3D(R.raw.hand_15000_tex, context);
+                	_objects[0] = new Object3D(R.raw.hand_500_tex, context);
+                	_objects[1] = new Object3D(R.raw.hand_1250_tex, context);
+        			_objects[2] = new Object3D(R.raw.hand_2500_tex, context);
+        			_objects[3] = new Object3D(R.raw.hand_5000_tex, context);
+        			_objects[4] = new Object3D(R.raw.hand_8500_tex, context);
+        			
         			setSimpleTexture();
         			cubeMap = setCubeMapTexture(R.raw.negative_x,R.raw.positive_x,R.raw.negative_y,R.raw.positive_y,R.raw.negative_z,R.raw.positive_z);
         			reflect = setCubeMapTexture(R.raw.left,R.raw.right,R.raw.bottom,R.raw.top,R.raw.back,R.raw.front);
@@ -77,8 +78,8 @@ public class SplashActivity extends Activity {
     }
     
     public void setSimpleTexture() throws IOException{
-    	Bitmap simpleTex[] = new Bitmap[5];
-    	for(int i = 0; i < 5; i++)
+    	Bitmap simpleTex[] = new Bitmap[_objects.length];
+    	for(int i = 0; i < _objects.length; i++)
     	{
     		InputStream is = this.getResources().openRawResource(texFiles[i]);
     		Bitmap texture = BitmapFactory.decodeStream(is); 
