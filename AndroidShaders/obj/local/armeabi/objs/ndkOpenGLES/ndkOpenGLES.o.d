@@ -1,5 +1,5 @@
 obj/local/armeabi/objs/ndkOpenGLES/ndkOpenGLES.o: jni/ndkOpenGLES.c \
- jni/graphics_shaders_NativeLib.h \
+ jni/opengles_android_NativeLib.h \
  /cygdrive/c/NDK/ndk/platforms/android-19/arch-arm/usr/include/jni.h \
  /cygdrive/c/NDK/ndk/platforms/android-19/arch-arm/usr/include/sys/cdefs.h \
  /cygdrive/c/NDK/ndk/platforms/android-19/arch-arm/usr/include/sys/cdefs_elf.h \
@@ -18,7 +18,7 @@ obj/local/armeabi/objs/ndkOpenGLES/ndkOpenGLES.o: jni/ndkOpenGLES.c \
  /cygdrive/c/NDK/ndk/platforms/android-19/arch-arm/usr/include/android/rect.h \
  /cygdrive/c/NDK/ndk/platforms/android-19/arch-arm/usr/include/EGL/eglext.h
 
-jni/graphics_shaders_NativeLib.h:
+jni/opengles_android_NativeLib.h:
 
 /cygdrive/c/NDK/ndk/platforms/android-19/arch-arm/usr/include/jni.h:
 

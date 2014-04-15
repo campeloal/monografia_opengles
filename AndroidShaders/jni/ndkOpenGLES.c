@@ -1,4 +1,4 @@
-#include "graphics_shaders_NativeLib.h"
+#include "opengles_android_NativeLib.h"
 #define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
@@ -7,7 +7,7 @@
 
 GLuint query;
 
-JNIEXPORT void JNICALL Java_graphics_shaders_NativeLib_startGPUTime(JNIEnv * env, jobject obj)
+JNIEXPORT void JNICALL Java_opengles_android_NativeLib_startGPUTime(JNIEnv * env, jobject obj)
 {
 	PFNGLGENQUERIESEXTPROC glGenQueriesEXT;
 	glGenQueriesEXT = (PFNGLGENQUERIESEXTPROC)eglGetProcAddress("glGenQueriesEXT");
@@ -17,13 +17,13 @@ JNIEXPORT void JNICALL Java_graphics_shaders_NativeLib_startGPUTime(JNIEnv * env
 	glBeginQueryEXT (GL_TIME_ELAPSED_EXT, query);
 }
 
-JNIEXPORT void JNICALL Java_graphics_shaders_NativeLib_stopGPUTime(JNIEnv * env, jobject obj){
+JNIEXPORT void JNICALL Java_opengles_android_NativeLib_stopGPUTime(JNIEnv * env, jobject obj){
 	PFNGLENDQUERYEXTPROC glEndQueryEXT;
 	glEndQueryEXT = (PFNGLENDQUERYEXTPROC)eglGetProcAddress("glEndQueryEXT");
 	glEndQueryEXT(GL_TIME_ELAPSED_EXT);
 }
 
-JNIEXPORT jint JNICALL Java_graphics_shaders_NativeLib_getTime(JNIEnv * env, jobject obj){
+JNIEXPORT jint JNICALL Java_opengles_android_NativeLib_getTime(JNIEnv * env, jobject obj){
 	PFNGLGETQUERYOBJECTIVEXTPROC glGetQueryObjectivEXT;
 	glGetQueryObjectivEXT = (PFNGLGETQUERYOBJECTIVEXTPROC)eglGetProcAddress("glGetQueryObjectivEXT");
 	int done;

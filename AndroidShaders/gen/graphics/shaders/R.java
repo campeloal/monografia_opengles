@@ -89,9 +89,11 @@ public final class R {
         public static final int texture_15000=0x7f040034;
         public static final int texture_2500=0x7f040035;
         public static final int texture_5000=0x7f040036;
-        public static final int toon_ps=0x7f040037;
-        public static final int toon_vs=0x7f040038;
-        public static final int top=0x7f040039;
+        public static final int timer=0x7f040037;
+        public static final int timer_press=0x7f040038;
+        public static final int toon_ps=0x7f040039;
+        public static final int toon_vs=0x7f04003a;
+        public static final int top=0x7f04003b;
     }
     public static final class string {
         public static final int app_name=0x7f050008;
