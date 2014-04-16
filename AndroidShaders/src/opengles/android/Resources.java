@@ -28,27 +28,4 @@ public class Resources {
 		return this._objects;
 	}
 	
-	public void setReflectText(Bitmap[] reflectText){
-		this.reflectText = reflectText;
-	}
-	
-	public void setCubeMapText(Bitmap[] cubeMapText){
-		this.cubeMapText = cubeMapText;
-	}
-	
-	public void setSimpleTexts(Bitmap[] simpleTexts){
-		this.simpleTexts = simpleTexts;
-	}
-	
-	public Bitmap[] getReflectText(){
-		return reflectText;
-	}
-	
-	public Bitmap[] getCubeMapText(){
-		return cubeMapText;
-	}
-	
-	public Bitmap[] getSimpleTexts(){
-		return simpleTexts;
-	}
 }

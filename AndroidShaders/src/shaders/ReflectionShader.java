@@ -1,13 +1,13 @@
 package shaders;
 
 import graphics.shaders.R;
-import graphics.shaders.R.raw;
-
 import java.nio.FloatBuffer;
 
+import android.annotation.TargetApi;
 import android.opengl.GLES20;
+import android.os.Build;
 
-public class ReflectionShader extends Shader{
+@TargetApi(Build.VERSION_CODES.FROYO) public class ReflectionShader extends Shader{
 	private static final int FLOAT_SIZE_BYTES = 4;
 	private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 8 * FLOAT_SIZE_BYTES;
 	
@@ -25,7 +25,6 @@ public class ReflectionShader extends Shader{
 		GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aNormal"), 3, GLES20.GL_FLOAT, false,
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
 		GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aNormal"));
-		// Bind the texture
         GLES20.glActiveTexture ( GLES20.GL_TEXTURE0 );
         GLES20.glBindTexture ( GLES20.GL_TEXTURE_CUBE_MAP, reflectText );
         // send to the shader

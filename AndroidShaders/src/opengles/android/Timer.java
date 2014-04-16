@@ -1,7 +1,6 @@
 package opengles.android;
 
 import android.content.Context;
-import android.opengl.GLES20;
 import android.widget.Toast;
 
 public class Timer {

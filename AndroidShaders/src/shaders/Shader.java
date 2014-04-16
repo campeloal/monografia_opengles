@@ -4,11 +4,13 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.opengl.GLES20;
+import android.os.Build;
 import android.util.Log;
 
-public class Shader {
+@TargetApi(Build.VERSION_CODES.FROYO) public class Shader {
 	/************************
 	 * PROPERTIES
 	 **********************/
@@ -80,7 +82,7 @@ public class Shader {
 		this._fragmentS = fs;
 
 		// create the program
-		int create = createProgram();
+		createProgram();
 	}
 
 	/**

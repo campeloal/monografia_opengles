@@ -1,13 +1,13 @@
 package shaders;
 
 import graphics.shaders.R;
-import graphics.shaders.R.raw;
-
 import java.nio.FloatBuffer;
 
+import android.annotation.TargetApi;
 import android.opengl.GLES20;
+import android.os.Build;
 
-public class ToonShader extends Shader{
+@TargetApi(Build.VERSION_CODES.FROYO) public class ToonShader extends Shader{
 	private static final int FLOAT_SIZE_BYTES = 4;
 	private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 8 * FLOAT_SIZE_BYTES;
 	

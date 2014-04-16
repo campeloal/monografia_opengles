@@ -1,13 +1,14 @@
 package shaders;
 
 import graphics.shaders.R;
-import graphics.shaders.R.raw;
-
 import java.nio.FloatBuffer;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.opengl.GLES20;
+import android.os.Build;
 
-public class TextureShader extends Shader{
+@SuppressLint("InlinedApi") @TargetApi(Build.VERSION_CODES.FROYO) public class TextureShader extends Shader{
 	private static final int FLOAT_SIZE_BYTES = 4;
 	private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 8 * FLOAT_SIZE_BYTES;
 	private static final int TRIANGLE_VERTICES_DATA_TEX_OFFSET = 6;
@@ -18,11 +19,11 @@ public class TextureShader extends Shader{
 		super.fID = R.raw.simple_tex_ps;
 	}
 	
-	public void initShaderParams(int _program, FloatBuffer _vb,int[] simpleTexts,int currentText)
+	public void initShaderParams(int _program, FloatBuffer _vb,int simpleText)
 	{
 		// Bind the texture
 		GLES20.glActiveTexture ( GLES20.GL_TEXTURE0 );
-        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, simpleTexts[currentText] );
+        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, simpleText );
 		GLES20.glUniform1i(GLES20.glGetUniformLocation(_program, "texture"), 0);
 		
 		_vb.position(TRIANGLE_VERTICES_DATA_TEX_OFFSET);

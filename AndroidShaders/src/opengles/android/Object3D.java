@@ -35,6 +35,8 @@ public class Object3D {
 	// Store the context
 	Context activity; 
 	
+	Texture texture;
+	
 	ArrayList<Float> mainBuffer;
 	ArrayList<Short> indicesB;
 	// keep reading vertices
@@ -54,6 +56,7 @@ public class Object3D {
 	public Object3D(int objID,Context activity){
 		this.activity = activity;
 		this.objID = objID;
+		texture = new Texture();
 		loadFile();
 	}
 	
@@ -232,6 +235,10 @@ public class Object3D {
 			tc.add((float) 1.0); 	// u
 			tc.add((float) 1.0);	// v
 		}
+	}
+	
+	public Texture getTexture(){
+		return texture;
 	}
 	
 

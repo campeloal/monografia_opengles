@@ -15,15 +15,15 @@ import shaders.Shader;
 import shaders.TextureShader;
 import shaders.ToonShader;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.os.Build;
 import android.util.Log;
 
-class Renderer implements GLSurfaceView.Renderer {
+@TargetApi(Build.VERSION_CODES.FROYO) class Renderer implements GLSurfaceView.Renderer {
 	/******************************
 	 * PROPERTIES
 	 ******************************/
@@ -35,9 +35,6 @@ class Renderer implements GLSurfaceView.Renderer {
 	private static final int FLOAT_SIZE_BYTES = 4;
 	private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 8 * FLOAT_SIZE_BYTES;
 	private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET = 0;
-	private static final int TRIANGLE_VERTICES_DATA_NOR_OFFSET = 3;
-	private static final int TRIANGLE_VERTICES_DATA_TEX_OFFSET = 6;
-
 	// shader constants
 	private final int GOURAUD_SHADER = 0;
 	private final int PHONG_SHADER = 1;
@@ -68,12 +65,6 @@ class Renderer implements GLSurfaceView.Renderer {
 	private float[] mVMatrix = new float[16]; 		// view
 	private float[] mMVMatrix = new float[16]; 		// modelview
 	private float[] normalMatrix = new float[16]; 	// modelview normal
-	private float[] invView = new float[16];
-
-	// textures enabled?
-	private boolean enableTexture = true;
-	private int[] _texIDs;
-
 	// light parameters
 	private float[] lightPos = {0.0f, 0.0f, 0.0f, 1};
 	private float[] lightDir = {0.0f,1.0f,1.0f};
@@ -87,17 +78,13 @@ class Renderer implements GLSurfaceView.Renderer {
 
 	// eye pos
 	private float[] eyePos = {-5.0f, 0.0f, 0.0f};
-	private float[] nEye = {1.0f, 0.0f, 0.0f};
-
 	// scaling
 	float scaleX = 1.0f;
 	float scaleY = 1.0f;
 	float scaleZ = 1.0f;
 
 
-	private final int numTex;
-	private int reflectText, cubeMapText, currentText = 0;
-	private int[] simpleTexts;
+	private int reflectText, cubeMapText, simpleText;
 
 	private Context mContext;
 	
@@ -115,8 +102,6 @@ class Renderer implements GLSurfaceView.Renderer {
 		
 		Resources r = Resources.getInstance();
 		this._objects = r.getObjects();
-		numTex = _objects.length;
-
 		//set current object and shader
 		_currentShader = this.GOURAUD_SHADER;
 		_currentObject = 0;
@@ -177,6 +162,9 @@ class Renderer implements GLSurfaceView.Renderer {
 		ShortBuffer _ib = ob.get_ib();
 		short[] _indices = ob.get_indices();
 		
+		reflectText = _objects[_currentObject].getTexture().getReflectTexture();
+		cubeMapText = _objects[_currentObject].getTexture().getCubeMapTexture();
+		simpleText = _objects[_currentObject].getTexture().getSimpleTexture();
 		
 		// Vertex buffer
 
@@ -193,31 +181,31 @@ class Renderer implements GLSurfaceView.Renderer {
 			matSpecular, matDiffuse, matShininess, eyePos);
 		}
 		
-		if(_shaders[this.PHONG_SHADER].isActivated())
+		else if(_shaders[this.PHONG_SHADER].isActivated())
 		{
 			((PhongShader) _shaders[this.PHONG_SHADER]).initShaderParams(_program, _vb,mMVPMatrix, lightPos, lightColor, matAmbient, 
 					matSpecular, matDiffuse, matShininess, eyePos);
 		}
 		
-		if(_shaders[TOON_SHADER].isActivated())
+		else if(_shaders[TOON_SHADER].isActivated())
 		{
 			((ToonShader) _shaders[this.TOON_SHADER]).initShaderParams(_program, _vb, lightDir);
 		}
 		
-		if(_shaders[CUBEMAP_SHADER].isActivated())
+		else if(_shaders[CUBEMAP_SHADER].isActivated())
 		{
 			
 			((CubeMapShader) _shaders[this.CUBEMAP_SHADER]).initShaderParams(_program, _vb, cubeMapText);
 		}
 		
-		if(_shaders[REFLECTION_SHADER].isActivated())
+		else if(_shaders[REFLECTION_SHADER].isActivated())
 		{
 			((ReflectionShader) _shaders[this.REFLECTION_SHADER]).initShaderParams(_program, _vb, reflectText, mMVMatrix, normalMatrix);
 		}
 		
-		if(_shaders[TEXTURE_SHADER].isActivated())
+		else if(_shaders[TEXTURE_SHADER].isActivated())
 		{
-			((TextureShader) _shaders[this.TEXTURE_SHADER]).initShaderParams(_program, _vb, simpleTexts, currentText);
+			((TextureShader) _shaders[this.TEXTURE_SHADER]).initShaderParams(_program, _vb, simpleText);
 			
 		}
 
@@ -280,13 +268,13 @@ class Renderer implements GLSurfaceView.Renderer {
 		GLES20.glCullFace(GLES20.GL_BACK); 
 		GLES20.glFrontFace(GLES20.GL_CCW);
 		
-		Resources r = Resources.getInstance();
-		Bitmap cubeMap[] = r.getCubeMapText();
-		Bitmap reflect[] = r.getReflectText();
-
-		reflectText = createCubeMapTexture(reflect);
-		cubeMapText = createCubeMapTexture(cubeMap);
-		simpleTexts = createSimpleTexture();
+		for(int i = 0; i< _objects.length;i++)
+		{
+			_objects[i].getTexture().createSimpleTexture();
+			_objects[i].getTexture().createCubeMapTexture("Cube Map");
+			_objects[i].getTexture().createCubeMapTexture("Reflect");
+		}
+		
 
 		// set the view matrix
 		Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5.0f, 0.0f, 0f, 0f, 0f, 1.0f, 0.0f);		
@@ -305,68 +293,7 @@ class Renderer implements GLSurfaceView.Renderer {
 		this._shaders[shader].setIsActivated(isActivated);
 	}
 	
-	private int[] createSimpleTexture(){
-		// Texture object handle
-        int[] textureId = new int[numTex];
-
-        //  Generate a texture object
-        GLES20.glGenTextures ( numTex, textureId, 0 );
-        
-        Resources r = Resources.getInstance();
-        
-        for(int i=0; i < numTex; i++)
-        {
-	        // Bind the texture object
-	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, textureId[i] );
-
-	        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_NEAREST);
-			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_LINEAR);
-			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,GLES20.GL_REPEAT);
-			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,GLES20.GL_REPEAT);
-
-	        //  Load the texture
-	        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, r.getSimpleTexts()[i], 0);
-        }
-      
-        return textureId;
-	}
-	
-	private int createCubeMapTexture(Bitmap[] cubeMap)
-    {
-
-		int[] textureId = new int[1];		
 		
-        // Generate a texture object
-        GLES20.glGenTextures ( 1, textureId, 0 );
-
-        // Bind the texture object
-        GLES20.glBindTexture ( GLES20.GL_TEXTURE_CUBE_MAP, textureId[0] );
-    
-        // Load the cube face - Positive X
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, cubeMap[1], 0);
-
-        // Load the cube face - Negative X
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, cubeMap[0], 0);
-        
-        // Load the cube face - Positive Y
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, cubeMap[3], 0);
-
-        // Load the cube face - Negative Y
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, cubeMap[2], 0);
-
-        // Load the cube face - Positive Z
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, cubeMap[5], 0);
-
-        // Load the cube face - Negative Z
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, cubeMap[4], 0);
-
-        // Set the filtering mode
-        GLES20.glTexParameteri ( GLES20.GL_TEXTURE_CUBE_MAP, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST );
-        GLES20.glTexParameteri ( GLES20.GL_TEXTURE_CUBE_MAP, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST );
-
-        return textureId[0];
-    }
-	
 	/**
 	 * Scaling
 	 */
@@ -386,12 +313,6 @@ class Renderer implements GLSurfaceView.Renderer {
 			throw new RuntimeException(op + ": glError " + error);
 		}
 	}
-	
-	public void setCurrentText(int currentText)
-	{
-		this.currentText = currentText;
-	}
-	
 
 } 
 

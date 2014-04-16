@@ -152,7 +152,6 @@ public class ShaderActivity extends Activity {
 		{
 			CURRENT_POLYGON++;
 			renderer.setObject(CURRENT_POLYGON);
-			renderer.setCurrentText(CURRENT_POLYGON);
 		}
 		
 	}
@@ -163,7 +162,6 @@ public void decPolygons(){
 		{
 			CURRENT_POLYGON--;
 			renderer.setObject(CURRENT_POLYGON);
-			renderer.setCurrentText(CURRENT_POLYGON);
 		}
 		
 	}
