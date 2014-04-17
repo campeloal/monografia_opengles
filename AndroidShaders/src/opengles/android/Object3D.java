@@ -14,9 +14,7 @@ import android.content.Context;
 import android.util.Log;
 
 public class Object3D {
-	/*************************
-	 * PROPERTIES
-	 ************************/
+
 	// Constants
 	private static final int FLOAT_SIZE_BYTES = 4;
 	private static final int SHORT_SIZE_BYTES = 2;
@@ -61,10 +59,8 @@ public class Object3D {
 	}
 	
 	private int loadFile() {
-		//Log.d("Start-loadFile", "Starting loadFile");
 		try {
 			// Read the file from the resource
-			//Log.d("loadFile", "Trying to buffer read");
 			InputStream inputStream = activity.getResources().openRawResource(objID);
 
 			// setup Bufferedreader
@@ -91,15 +87,12 @@ public class Object3D {
 			in.close();
 			return 1;
 		} catch (Exception e) {
-			//Log.d("Error-LoadFile", "FOUND ERROR: " + e.toString());
 			return 0;
 		}
 	}
 	
 	private int loadOBJ(BufferedReader in) throws Exception {
 		try {
-			//Log.d("In OBJ:", "First");
-			/* read vertices first */
 			String str;
 			mainBuffer = new ArrayList<Float>(numVertices * 6);
 			indicesB = new ArrayList<Short>(numVertices * 3);

@@ -3,6 +3,7 @@ package shaders;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Hashtable;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -10,19 +11,19 @@ import android.opengl.GLES20;
 import android.os.Build;
 import android.util.Log;
 
-@TargetApi(Build.VERSION_CODES.FROYO) public class Shader {
-	/************************
-	 * PROPERTIES
-	 **********************/
+@TargetApi(Build.VERSION_CODES.FROYO) public abstract class Shader {
 
 	// program/vertex/fragment handles
-	private int _program, _vertexShader, _pixelShader;
+	protected int _program;
+	private int _vertexShader;
+	private int _pixelShader;
 	boolean isActivated = false;
 	int vID, fID;
 
-	// The shaders
-	private String _vertexS, _fragmentS;
 
+	public abstract void getParamsLocations();
+	public abstract void initShaderParams(@SuppressWarnings("rawtypes") Hashtable shaderParams);
+	
 	// Takes in ids for files to be read
 	public void readShader(Context context) 
 	{
@@ -62,44 +63,18 @@ import android.util.Log;
 				Log.d("ERROR-readingShader", "Could not read shader: " + e.getLocalizedMessage());
 			}
 
-
-			// Setup everything
-			setup(vs.toString(), fs.toString());
+			createProgram(vs.toString(), fs.toString());
 	}
 
-
-	/**************************
-	 * OTHER METHODS
-	 *************************/
-
-	/** 
-	 * Sets up everything
-	 * @param vs the vertex shader
-	 * @param fs the fragment shader 
-	 */
-	public void setup(String vs, String fs) {
-		this._vertexS = vs;
-		this._fragmentS = fs;
-
-		// create the program
-		createProgram();
-	}
-
-	/**
-	 * Creates a shader program.
-	 * @param vertexSource
-	 * @param fragmentSource
-	 * @return returns 1 if creation successful, 0 if not
-	 */
-	public int createProgram() {
+	public int createProgram(String vs, String fs) {
 		// Vertex shader
-		_vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, _vertexS);
+		_vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vs);
 		if (_vertexShader == 0) {
 			return 0;
 		}
 
 		// pixel shader
-		_pixelShader = loadShader(GLES20.GL_FRAGMENT_SHADER, _fragmentS);
+		_pixelShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fs);
 		if (_pixelShader == 0) {
 			return 0;
 		}
@@ -128,12 +103,6 @@ import android.util.Log;
 		return 1;
 	}
 
-	/**
-	 * Loads a shader (either vertex or pixel) given the source
-	 * @param shaderType VERTEX or PIXEL
-	 * @param source The string data representing the shader code
-	 * @return handle for shader
-	 */
 	public int loadShader(int shaderType, String source) {
 		int shader = GLES20.glCreateShader(shaderType);
 		if (shader != 0) {
@@ -151,10 +120,6 @@ import android.util.Log;
 		return shader;
 	}
 
-	/**
-	 * Error for OpenGL
-	 * @param op
-	 */
 	public void checkGlError(String op) {
 		int error;
 		while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
@@ -163,47 +128,8 @@ import android.util.Log;
 		}
 	}
 
-	/***************************
-	 * GET/SET
-	 *************************/
-	public int get_program() {
+	public int getProgram() {
 		return _program;
-	}
-
-	public void set_program(int _program) {
-		this._program = _program;
-	}
-
-	public int get_vertexShader() {
-		return _vertexShader;
-	}
-
-	public void set_vertexShader(int shader) {
-		_vertexShader = shader;
-	}
-
-	public int get_pixelShader() {
-		return _pixelShader;
-	}
-
-	public void set_pixelShader(int shader) {
-		_pixelShader = shader;
-	}
-
-	public String get_vertexS() {
-		return _vertexS;
-	}
-
-	public void set_vertexS(String _vertexs) {
-		_vertexS = _vertexs;
-	}
-
-	public String get_fragmentS() {
-		return _fragmentS;
-	}
-
-	public void set_fragmentS(String _fragments) {
-		_fragmentS = _fragments;
 	}
 	
 	public void setIsActivated(boolean isActivated){

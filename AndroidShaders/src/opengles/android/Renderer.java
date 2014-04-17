@@ -2,6 +2,8 @@ package opengles.android;
 
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.Hashtable;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -24,17 +26,12 @@ import android.os.Build;
 import android.util.Log;
 
 @TargetApi(Build.VERSION_CODES.FROYO) class Renderer implements GLSurfaceView.Renderer {
-	/******************************
-	 * PROPERTIES
-	 ******************************/
+
 	int[] texIDs;
 	// rotation 
 	public float mAngleX;
 	public float mAngleY;
 
-	private static final int FLOAT_SIZE_BYTES = 4;
-	private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 8 * FLOAT_SIZE_BYTES;
-	private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET = 0;
 	// shader constants
 	private final int GOURAUD_SHADER = 0;
 	private final int PHONG_SHADER = 1;
@@ -87,33 +84,30 @@ import android.util.Log;
 	private int reflectText, cubeMapText, simpleText;
 
 	private Context mContext;
+	@SuppressWarnings("rawtypes")
+	Hashtable shaderParams;
 	
 	//Measuring the performance
 	Timer timer;
 	private static String TAG = "Renderer";
 
-	/***************************
-	 * CONSTRUCTOR(S)
-	 **************************/
+	@SuppressWarnings("rawtypes")
 	public Renderer(Context context) {
 		
-		//this.loader_dialog = loader_dialog;
 		mContext = context;
 		
 		Resources r = Resources.getInstance();
 		this._objects = r.getObjects();
+		
 		//set current object and shader
 		_currentShader = this.GOURAUD_SHADER;
 		_currentObject = 0;
+		shaderParams = new Hashtable();
 		timer = Timer.getInstance();
 	}
 
-	/*****************************
-	 * GL FUNCTIONS
-	 ****************************/
-	/*
-	 * Draw function - called for every frame
-	 */
+	@SuppressWarnings("unchecked")
+
 	@SuppressLint("NewApi") public void onDrawFrame(GL10 glUnused) {
 		
 		// Ignore the passed-in GL10 interface, and use the GLES20
@@ -125,37 +119,14 @@ import android.util.Log;
 
 		// the current shader
 		Shader shader = _shaders[this._currentShader]; // PROBLEM!
-		int _program = shader.get_program();
+		int _program = shader.getProgram();
 		
 		// Start using the shader
 		GLES20.glUseProgram(_program);
 		checkGlError("glUseProgram");
-
-		// scaling
-		Matrix.setIdentityM(mScaleMatrix, 0);
-		Matrix.scaleM(mScaleMatrix, 0, scaleX, scaleY, scaleZ);
-
-		// Rotation along x
-		Matrix.setRotateM(mRotXMatrix, 0, this.mAngleY, -1.0f, 0.0f, 0.0f);
-		Matrix.setRotateM(mRotYMatrix, 0, this.mAngleX, 0.0f, 1.0f, 0.0f);
-
-
-		// Set the ModelViewProjectionMatrix
-		float tempMatrix[] = new float[16]; 
-		Matrix.multiplyMM(tempMatrix, 0, mRotYMatrix, 0, mRotXMatrix, 0);		
-		Matrix.multiplyMM(mMMatrix, 0, mScaleMatrix, 0, tempMatrix, 0);
-		Matrix.multiplyMM(mMVMatrix, 0, mVMatrix, 0, mMMatrix, 0);
-		Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVMatrix, 0);	
 		
-		// send to the shader
-		GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(_program, "uMVPMatrix"), 1, false, mMVPMatrix, 0);
+		changeModelViewMatrix();
 		
-		// Create the normal modelview matrix
-		// Invert + transpose of mvpmatrix
-		Matrix.invertM(normalMatrix, 0, mMVPMatrix, 0);
-		Matrix.transposeM(normalMatrix, 0, normalMatrix, 0);
-		
-		/*** DRAWING OBJECT **/
 		// Get buffers from mesh
 		Object3D ob = this._objects[this._currentObject];
 		FloatBuffer _vb = ob.get_vb();
@@ -166,47 +137,66 @@ import android.util.Log;
 		cubeMapText = _objects[_currentObject].getTexture().getCubeMapTexture();
 		simpleText = _objects[_currentObject].getTexture().getSimpleTexture();
 		
-		// Vertex buffer
-
-		// the vertex coordinates
-		_vb.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
-		GLES20.glVertexAttribPointer(GLES20.glGetAttribLocation(_program, "aPosition"), 3, GLES20.GL_FLOAT, false,
-				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, _vb);
-		GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aPosition"));
 		
 		if(_shaders[this.GOURAUD_SHADER].isActivated())
 		{
-			
-			((GouraudShader) _shaders[this.GOURAUD_SHADER]).initShaderParams(_program, _vb,mMVPMatrix, lightPos, lightColor, matAmbient, 
-			matSpecular, matDiffuse, matShininess, eyePos);
+			shaderParams.put("vertex buffer", _vb); shaderParams.put("mMVPMatrix", mMVPMatrix);
+			shaderParams.put("lightPos", lightPos); shaderParams.put("lightColor", lightColor);
+			shaderParams.put("matAmbient", matAmbient); shaderParams.put("matSpecular", matSpecular);
+			shaderParams.put("matDiffuse", matDiffuse); shaderParams.put("matShininess", matShininess);
+			shaderParams.put("eyePos", eyePos);
+	
+			((GouraudShader) _shaders[this.GOURAUD_SHADER]).initShaderParams(shaderParams);
 		}
 		
 		else if(_shaders[this.PHONG_SHADER].isActivated())
 		{
-			((PhongShader) _shaders[this.PHONG_SHADER]).initShaderParams(_program, _vb,mMVPMatrix, lightPos, lightColor, matAmbient, 
-					matSpecular, matDiffuse, matShininess, eyePos);
+			shaderParams.put("vertex buffer", _vb); shaderParams.put("mMVPMatrix", mMVPMatrix);
+			shaderParams.put("lightPos", lightPos); shaderParams.put("lightColor", lightColor);
+			shaderParams.put("matAmbient", matAmbient); shaderParams.put("matSpecular", matSpecular);
+			shaderParams.put("matDiffuse", matDiffuse); shaderParams.put("matShininess", matShininess);
+			shaderParams.put("eyePos", eyePos);
+			((PhongShader) _shaders[this.PHONG_SHADER]).initShaderParams(shaderParams);
 		}
 		
 		else if(_shaders[TOON_SHADER].isActivated())
 		{
-			((ToonShader) _shaders[this.TOON_SHADER]).initShaderParams(_program, _vb, lightDir);
+			shaderParams.put("mMVPMatrix", mMVPMatrix); shaderParams.put("lightDir", lightDir);
+			shaderParams.put("vertex buffer", _vb);
+			((ToonShader) _shaders[this.TOON_SHADER]).initShaderParams(shaderParams);
 		}
 		
 		else if(_shaders[CUBEMAP_SHADER].isActivated())
 		{
-			
-			((CubeMapShader) _shaders[this.CUBEMAP_SHADER]).initShaderParams(_program, _vb, cubeMapText);
+			shaderParams.put("mMVPMatrix", mMVPMatrix); shaderParams.put("vertex buffer", _vb);
+			shaderParams.put("cubeMapText", cubeMapText);
+			((CubeMapShader) _shaders[this.CUBEMAP_SHADER]).initShaderParams(shaderParams);
 		}
 		
 		else if(_shaders[REFLECTION_SHADER].isActivated())
 		{
-			((ReflectionShader) _shaders[this.REFLECTION_SHADER]).initShaderParams(_program, _vb, reflectText, mMVMatrix, normalMatrix);
+			shaderParams.put("mMVPMatrix", mMVPMatrix); shaderParams.put("vertex buffer",_vb);
+			shaderParams.put("reflectText",reflectText); shaderParams.put("mMVMatrix",mMVMatrix);
+			shaderParams.put("normalMatrix",normalMatrix); 
+			((ReflectionShader) _shaders[this.REFLECTION_SHADER]).initShaderParams(shaderParams);
 		}
 		
 		else if(_shaders[TEXTURE_SHADER].isActivated())
 		{
-			((TextureShader) _shaders[this.TEXTURE_SHADER]).initShaderParams(_program, _vb, simpleText);
+			shaderParams.put("mMVPMatrix", mMVPMatrix); shaderParams.put("simpleText", simpleText);
+			shaderParams.put("vertex buffer", _vb);
+			((TextureShader) _shaders[this.TEXTURE_SHADER]).initShaderParams(shaderParams);
 			
+		}
+		else if(_shaders[RED_SHADER].isActivated())
+		{
+			shaderParams.put("mMVPMatrix", mMVPMatrix); shaderParams.put("vertex buffer", _vb);
+			((RedShader) _shaders[this.RED_SHADER]).initShaderParams(shaderParams);	
+		}
+		else if(_shaders[FLAT_SHADER].isActivated())
+		{
+			shaderParams.put("mMVPMatrix", mMVPMatrix);shaderParams.put("vertex buffer", _vb);
+			((FlatShader) _shaders[this.FLAT_SHADER]).initShaderParams(shaderParams);	
 		}
 
 		String openglExtensions =  GLES20.glGetString(GLES20.GL_EXTENSIONS);
@@ -219,45 +209,46 @@ import android.util.Log;
 		checkGlError("glDrawElements");
 		
 	}
-
-	/*
-	 * Called when viewport is changed
-	 * @see android.opengl.GLSurfaceView$Renderer#onSurfaceChanged(javax.microedition.khronos.opengles.GL10, int, int)
-	 */
+	
 	public void onSurfaceChanged(GL10 glUnused, int width, int height) {
 		GLES20.glViewport(0, 0, width, height);
 		float ratio = (float) width / height;
 		Matrix.frustumM(mProjMatrix, 0, -ratio, ratio, -1, 1, 0.5f, 10);
 	}
 
-	/**
-	 * Initialization function
-	 */
 	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
 		
 		// initialize shaders
 		try {
 			_shaders[GOURAUD_SHADER] = new GouraudShader(); 
 			_shaders[GOURAUD_SHADER].readShader(mContext);
+			((GouraudShader) _shaders[this.GOURAUD_SHADER]).getParamsLocations();
 			_shaders[PHONG_SHADER] = new PhongShader();
 			_shaders[PHONG_SHADER].readShader(mContext);
+			((PhongShader) _shaders[PHONG_SHADER]).getParamsLocations();
 			_shaders[RED_SHADER] = new RedShader();
 			_shaders[RED_SHADER].readShader(mContext);
+			((RedShader) _shaders[RED_SHADER]).getParamsLocations();
 			_shaders[TOON_SHADER] = new ToonShader();
 			_shaders[TOON_SHADER].readShader(mContext);
+			((ToonShader) _shaders[TOON_SHADER]).getParamsLocations();
 			_shaders[FLAT_SHADER] = new FlatShader();
 			_shaders[FLAT_SHADER].readShader(mContext);
+			((FlatShader) _shaders[FLAT_SHADER]).getParamsLocations();
 			_shaders[CUBEMAP_SHADER] = new CubeMapShader();
 			_shaders[CUBEMAP_SHADER].readShader(mContext);
+			((CubeMapShader) _shaders[this.CUBEMAP_SHADER]).getParamsLocations();
 			_shaders[REFLECTION_SHADER] = new ReflectionShader();
 			_shaders[REFLECTION_SHADER].readShader(mContext);
+			((ReflectionShader) _shaders[REFLECTION_SHADER]).getParamsLocations();
 			_shaders[TEXTURE_SHADER] = new TextureShader();
 			_shaders[TEXTURE_SHADER].readShader(mContext);
-			
+			((TextureShader) _shaders[TEXTURE_SHADER]).getParamsLocations();
 			_shaders[_currentShader].setIsActivated(true);
 		} catch (Exception e) {
 			Log.d("SHADER 0 SETUP", e.getLocalizedMessage());
 		}
+		
 
 		GLES20.glClearDepthf(1.0f);
 		GLES20.glDepthFunc( GLES20.GL_LEQUAL );
@@ -293,16 +284,36 @@ import android.util.Log;
 		this._shaders[shader].setIsActivated(isActivated);
 	}
 	
+	private void changeModelViewMatrix() {
+		// scaling
+		Matrix.setIdentityM(mScaleMatrix, 0);
+		Matrix.scaleM(mScaleMatrix, 0, scaleX, scaleY, scaleZ);
+
+		// Rotation along x
+		Matrix.setRotateM(mRotXMatrix, 0, this.mAngleY, -1.0f, 0.0f, 0.0f);
+		Matrix.setRotateM(mRotYMatrix, 0, this.mAngleX, 0.0f, 1.0f, 0.0f);
+
+
+		// Set the ModelViewProjectionMatrix
+		float tempMatrix[] = new float[16]; 
+		Matrix.multiplyMM(tempMatrix, 0, mRotYMatrix, 0, mRotXMatrix, 0);		
+		Matrix.multiplyMM(mMMatrix, 0, mScaleMatrix, 0, tempMatrix, 0);
+		Matrix.multiplyMM(mMVMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+		Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVMatrix, 0);	
 		
-	/**
-	 * Scaling
-	 */
+		
+		// Create the normal modelview matrix
+		// Invert + transpose of mvpmatrix
+		Matrix.invertM(normalMatrix, 0, mMVPMatrix, 0);
+		Matrix.transposeM(normalMatrix, 0, normalMatrix, 0);		
+	}
+
+	
 	public void changeScale(float scale) {
 		if (scaleX * scale > 1.4f)
 			return;
 		scaleX *= scale;scaleY *= scale;scaleZ *= scale;
 
-		Log.d("SCALE: ", scaleX + "");
 	}
 
 	// debugging opengl
@@ -315,5 +326,3 @@ import android.util.Log;
 	}
 
 } 
-
-// END CLASS
