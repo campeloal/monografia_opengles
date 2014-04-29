@@ -16,6 +16,7 @@ import android.os.Build;
 	Bitmap[] cubeMap;
 	Bitmap[] simpleTex;
 	Bitmap[] reflect;
+	Bitmap positiveX,negativeX,positiveY,negativeY,positiveZ,negativeZ, texture;
 	int simpleTexId, cubeMapId, reflectId;
 	
 	
@@ -27,17 +28,19 @@ import android.os.Build;
         GLES20.glGenTextures ( 1, textureId, 0 );
         
         // Bind the texture object
-	        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, textureId[0] );
+        GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, textureId[0] );
 
-	        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_NEAREST);
-			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_LINEAR);
-			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,GLES20.GL_REPEAT);
-			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,GLES20.GL_REPEAT);
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_NEAREST);
+		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_LINEAR);
+		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,GLES20.GL_REPEAT);
+		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,GLES20.GL_REPEAT);
 
-	        //  Load the texture
-	        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, simpleTex[0], 0);
-      
+        //  Load the texture
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, simpleTex[0], 0);
+        texture.recycle();
+        
         simpleTexId = textureId[0];
+        
 	}
 	
 	@TargetApi(Build.VERSION_CODES.FROYO) @SuppressLint("InlinedApi") public void createCubeMapTexture(String type)
@@ -78,10 +81,12 @@ import android.os.Build;
 
         // Load the cube face - Negative Z
         GLUtils.texImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, chosenTex[4], 0);
+        
 
         // Set the filtering mode
         GLES20.glTexParameteri ( GLES20.GL_TEXTURE_CUBE_MAP, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST );
         GLES20.glTexParameteri ( GLES20.GL_TEXTURE_CUBE_MAP, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST );
+        
 
         if(type.equals("Cube Map"))
 		{
@@ -90,20 +95,26 @@ import android.os.Build;
 		else
 		{
 			reflectId = textureId[0];
+			positiveX.recycle();
+			negativeX.recycle();
+			positiveY.recycle();
+			negativeY.recycle();
+			positiveZ.recycle();
+			negativeZ.recycle();
 		}
+        
     }
 
 	 public void readSimpleTexture(int texFile, Context mContext) throws IOException{
 	    	simpleTex = new Bitmap[1];
 	    	InputStream is = mContext.getResources().openRawResource(texFile);
-	    	Bitmap texture = BitmapFactory.decodeStream(is); 
+	    	texture = BitmapFactory.decodeStream(is); 
 	    	simpleTex[0] = texture;
 	    	is.close();
 	    
 	 }
 	 
 	 public void readCubeMapTexture(int[] files, Context mContext, String type) throws IOException{
-	    	Bitmap positiveX,negativeX,positiveY,negativeY,positiveZ,negativeZ;
 			InputStream is = mContext.getResources().openRawResource(files[1]);
 			positiveX = BitmapFactory.decodeStream(is);
 			is = mContext.getResources().openRawResource(files[0]);
@@ -138,6 +149,7 @@ import android.os.Build;
 				reflect[4] = negativeZ;
 				reflect[5] = positiveZ;
 			}
+			
 	    }
 	 	 
 	 public int getSimpleTexture()

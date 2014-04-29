@@ -1,7 +1,7 @@
 package opengles.android;
 
 import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
+import java.util.ArrayList;
 import java.util.Hashtable;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -11,6 +11,7 @@ import shaders.CubeMapShader;
 import shaders.FlatShader;
 import shaders.GouraudShader;
 import shaders.PhongShader;
+import shaders.RandColorShader;
 import shaders.RedShader;
 import shaders.ReflectionShader;
 import shaders.Shader;
@@ -41,13 +42,14 @@ import android.util.Log;
 	private final int CUBEMAP_SHADER = 5;
 	private final int REFLECTION_SHADER = 6;
 	private final int TEXTURE_SHADER = 7;
+	private final int RANDCOLOR_SHADER = 8;
 
 	// array of shaders
-	Shader _shaders[] = new Shader[8];
+	Shader _shaders[] = new Shader[9];
 	private int _currentShader;
 
 	// The objects
-	Object3D[] _objects;
+	ArrayList<Object3D> objects;
 
 	// current object
 	private int _currentObject;
@@ -95,9 +97,8 @@ import android.util.Log;
 	public Renderer(Context context) {
 		
 		mContext = context;
-		
 		Resources r = Resources.getInstance();
-		this._objects = r.getObjects();
+		this.objects = r.getObjects();
 		
 		//set current object and shader
 		_currentShader = this.GOURAUD_SHADER;
@@ -128,14 +129,12 @@ import android.util.Log;
 		changeModelViewMatrix();
 		
 		// Get buffers from mesh
-		Object3D ob = this._objects[this._currentObject];
-		FloatBuffer _vb = ob.get_vb();
-		ShortBuffer _ib = ob.get_ib();
-		short[] _indices = ob.get_indices();
+		Object3D ob = objects.get(_currentObject);
+		FloatBuffer _vb = ob.getVertexBuffer();
 		
-		reflectText = _objects[_currentObject].getTexture().getReflectTexture();
-		cubeMapText = _objects[_currentObject].getTexture().getCubeMapTexture();
-		simpleText = _objects[_currentObject].getTexture().getSimpleTexture();
+		reflectText = objects.get(_currentObject).getTexture().getReflectTexture();
+		cubeMapText = objects.get(_currentObject).getTexture().getCubeMapTexture();
+		simpleText = objects.get(_currentObject).getTexture().getSimpleTexture();
 		
 		
 		if(_shaders[this.GOURAUD_SHADER].isActivated())
@@ -198,12 +197,18 @@ import android.util.Log;
 			shaderParams.put("mMVPMatrix", mMVPMatrix);shaderParams.put("vertex buffer", _vb);
 			((FlatShader) _shaders[this.FLAT_SHADER]).initShaderParams(shaderParams);	
 		}
+		else if(_shaders[RANDCOLOR_SHADER].isActivated())
+		{
+			shaderParams.put("mMVPMatrix", mMVPMatrix);shaderParams.put("vertex buffer", _vb);
+			((RandColorShader) _shaders[this.RANDCOLOR_SHADER]).initShaderParams(shaderParams);	
+		}
 
 		String openglExtensions =  GLES20.glGetString(GLES20.GL_EXTENSIONS);
 				
 		timer.startTime(openglExtensions);
 		// Draw with indices
-		GLES20.glDrawElements(GLES20.GL_TRIANGLES, _indices.length, GLES20.GL_UNSIGNED_SHORT, _ib);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, objects.get(_currentObject).getTotalNumberVertices());
+		
 		timer.stopTime();
 				
 		checkGlError("glDrawElements");
@@ -221,29 +226,20 @@ import android.util.Log;
 		// initialize shaders
 		try {
 			_shaders[GOURAUD_SHADER] = new GouraudShader(); 
-			_shaders[GOURAUD_SHADER].readShader(mContext);
-			((GouraudShader) _shaders[this.GOURAUD_SHADER]).getParamsLocations();
-			_shaders[PHONG_SHADER] = new PhongShader();
-			_shaders[PHONG_SHADER].readShader(mContext);
-			((PhongShader) _shaders[PHONG_SHADER]).getParamsLocations();
-			_shaders[RED_SHADER] = new RedShader();
-			_shaders[RED_SHADER].readShader(mContext);
-			((RedShader) _shaders[RED_SHADER]).getParamsLocations();
-			_shaders[TOON_SHADER] = new ToonShader();
-			_shaders[TOON_SHADER].readShader(mContext);
-			((ToonShader) _shaders[TOON_SHADER]).getParamsLocations();
-			_shaders[FLAT_SHADER] = new FlatShader();
-			_shaders[FLAT_SHADER].readShader(mContext);
-			((FlatShader) _shaders[FLAT_SHADER]).getParamsLocations();
-			_shaders[CUBEMAP_SHADER] = new CubeMapShader();
-			_shaders[CUBEMAP_SHADER].readShader(mContext);
-			((CubeMapShader) _shaders[this.CUBEMAP_SHADER]).getParamsLocations();
-			_shaders[REFLECTION_SHADER] = new ReflectionShader();
-			_shaders[REFLECTION_SHADER].readShader(mContext);
-			((ReflectionShader) _shaders[REFLECTION_SHADER]).getParamsLocations();
+			_shaders[PHONG_SHADER] = new PhongShader(); 
+			_shaders[RED_SHADER] = new RedShader(); 
+			_shaders[TOON_SHADER] = new ToonShader(); 
+			_shaders[FLAT_SHADER] = new FlatShader(); 
 			_shaders[TEXTURE_SHADER] = new TextureShader();
-			_shaders[TEXTURE_SHADER].readShader(mContext);
-			((TextureShader) _shaders[TEXTURE_SHADER]).getParamsLocations();
+			_shaders[CUBEMAP_SHADER] = new CubeMapShader();
+			_shaders[REFLECTION_SHADER] = new ReflectionShader();
+			_shaders[RANDCOLOR_SHADER] = new RandColorShader();
+			
+			for(int i = 0; i < _shaders.length; i++)
+			{
+			_shaders[i].readShader(mContext);
+			_shaders[i].getParamsLocations();
+			}
 			_shaders[_currentShader].setIsActivated(true);
 		} catch (Exception e) {
 			Log.d("SHADER 0 SETUP", e.getLocalizedMessage());
@@ -259,13 +255,14 @@ import android.util.Log;
 		GLES20.glCullFace(GLES20.GL_BACK); 
 		GLES20.glFrontFace(GLES20.GL_CCW);
 		
-		for(int i = 0; i< _objects.length;i++)
+		//Create textures for shaders
+				
+		for(int i = 0; i< objects.size();i++)
 		{
-			_objects[i].getTexture().createSimpleTexture();
-			_objects[i].getTexture().createCubeMapTexture("Cube Map");
-			_objects[i].getTexture().createCubeMapTexture("Reflect");
-		}
-		
+			objects.get(i).getTexture().createSimpleTexture();
+			objects.get(i).getTexture().createCubeMapTexture("Cube Map");
+			objects.get(i).getTexture().createCubeMapTexture("Reflect");
+		}	
 
 		// set the view matrix
 		Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5.0f, 0.0f, 0f, 0f, 0f, 1.0f, 0.0f);		
@@ -278,6 +275,10 @@ import android.util.Log;
 
 	public void setObject(int object) {
 		_currentObject = object;
+	}
+	
+	public Object3D getObject(){
+		return objects.get(_currentObject);
 	}
 	
 	public void setActivated(int shader, boolean isActivated){
@@ -314,6 +315,10 @@ import android.util.Log;
 			return;
 		scaleX *= scale;scaleY *= scale;scaleZ *= scale;
 
+	}
+	
+	public int getLastPolygon(){
+		return this.objects.size() -1;
 	}
 
 	// debugging opengl

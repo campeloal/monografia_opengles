@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
@@ -17,36 +16,26 @@ public class Object3D {
 
 	// Constants
 	private static final int FLOAT_SIZE_BYTES = 4;
-	private static final int SHORT_SIZE_BYTES = 2;
 
 	// Vertices
 	private float _vertices[];
-		
-	// Indices
-	private short _indices[];	
-	
-	// Buffers - index, vertex, normals and texcoords
-	private FloatBuffer _vb;
-	private FloatBuffer _nb;
-	private ShortBuffer _ib;
+			
+	// Buffers
+	private FloatBuffer vertexBuffer;
 
 	// Store the context
 	Context activity; 
 	
 	Texture texture;
 	
-	ArrayList<Float> mainBuffer;
-	ArrayList<Short> indicesB;
 	// keep reading vertices
-	ArrayList<Float> vs = new ArrayList<Float>(1000); // vertices
-	ArrayList<Float> tc = new ArrayList<Float>(1000); // texture coords
-	ArrayList<Float> ns = new ArrayList<Float>(1000); // normals
-	ArrayList<Integer> vertIndex = new ArrayList<Integer>(1000);
-	ArrayList<Integer> normalIndex = new ArrayList<Integer>(1000);
-	ArrayList<Integer> texIndex = new ArrayList<Integer>(1000);
-	int numVertices = 0;
-	int numNormals = 0;
-	int numTexCoords = 0;
+	ArrayList<Float> vs = new ArrayList<Float>(10000); // vertices
+	ArrayList<Float> tc = new ArrayList<Float>(10000); // texture coords
+	ArrayList<Float> ns = new ArrayList<Float>(10000); // normals
+	ArrayList<Integer> vertIndex = new ArrayList<Integer>(10000);
+	ArrayList<Integer> normalIndex = new ArrayList<Integer>(10000);
+	ArrayList<Integer> texIndex = new ArrayList<Integer>(10000);
+	
 	boolean hasTexture = false;
 	short index = 0;
 	int objID;
@@ -66,36 +55,20 @@ public class Object3D {
 			// setup Bufferedreader
 			BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
 
-			loadOBJ(in);
+			loadOBJ(in);			
+			readVerticesBasedIndex();			
+			createBuffer();
 			
-			// Generate your vertex, normal and index buffers
-			// vertex buffer
-			_vb = ByteBuffer.allocateDirect(_vertices.length
-					* FLOAT_SIZE_BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
-			_vb.put(_vertices);
-			_vb.position(0);
-			
-
-			// index buffer
-			_ib = ByteBuffer.allocateDirect(_indices.length
-					* SHORT_SIZE_BYTES).order(ByteOrder.nativeOrder()).asShortBuffer();
-			_ib.put(_indices);
-			_ib.position(0);
-			
-			//Log.d("loadFile - size", _indices.length/3 + "," + _vertices.length);
-			// close the reader
 			in.close();
 			return 1;
 		} catch (Exception e) {
 			return 0;
 		}
 	}
-	
+		
 	private int loadOBJ(BufferedReader in) throws Exception {
 		try {
 			String str;
-			mainBuffer = new ArrayList<Float>(numVertices * 6);
-			indicesB = new ArrayList<Short>(numVertices * 3);
 			
 			while((str = in.readLine()) != null)
 			{
@@ -106,7 +79,6 @@ public class Object3D {
 					vs.add(Float.parseFloat(t.nextToken())); 	// x
 					vs.add(Float.parseFloat(t.nextToken()));	// y
 					vs.add(Float.parseFloat(t.nextToken()));	// z
-					numVertices++;
 				}
 				// read tex coords
 				
@@ -116,7 +88,6 @@ public class Object3D {
 						hasTexture = true;
 					tc.add(Float.parseFloat(t.nextToken())); 	// u
 					tc.add(Float.parseFloat(t.nextToken()));	// v
-					numTexCoords++;
 				}
 								
 				// read vertex normals
@@ -125,7 +96,6 @@ public class Object3D {
 					ns.add(Float.parseFloat(t.nextToken())); 	// x
 					ns.add(Float.parseFloat(t.nextToken()));	// y
 					ns.add(Float.parseFloat(t.nextToken()));	// y
-					numNormals++;
 				}
 				
 				// now read all the faces
@@ -134,51 +104,21 @@ public class Object3D {
 				{
 					if(hasTexture)
 					{
-						loadFaceTexture(t);
+						loadFace(t,"/");
 					}
 					else
 					{
-						loadFaceNoTexture(t);
+						loadFace(t, "//");
 					}
 				}
-			}		
-			
-			for (int i =0; i<vertIndex.size();i++)
-			{
-				// Add all the vertex info
-				mainBuffer.add(vs.get(vertIndex.get(i) * 3)); 	 // x
-				mainBuffer.add(vs.get(vertIndex.get(i) * 3 + 1));// y
-				mainBuffer.add(vs.get(vertIndex.get(i) * 3 + 2));// z
-				
-				// add the normal info
-				mainBuffer.add(-ns.get(normalIndex.get(i) * 3)); 	  // x
-				mainBuffer.add(-ns.get(normalIndex.get(i) * 3 + 1)); // y
-				mainBuffer.add(-ns.get(normalIndex.get(i) * 3 + 2)); // z
-				
-				// add the tex coord info
-				mainBuffer.add(tc.get(texIndex.get(i) * 2)); 	  // u
-				mainBuffer.add(tc.get(texIndex.get(i) * 2 + 1)); // v
 			}
 			
-			mainBuffer.trimToSize();
-			
-			_vertices = new float[mainBuffer.size()];
-			
-			// copy over the mainbuffer to the vertex + normal array
-			for(int i = 0; i < mainBuffer.size(); i++)
-			{
-				_vertices[i] = mainBuffer.get(i);
-			}
-			
-			Log.d("COMPLETED TRANSFER:", "VERTICES: " + _vertices.length);
-		
-			
-			// copy over indices buffer
-			indicesB.trimToSize();
-			_indices = new short[indicesB.size()];
-			for(int i = 0; i < indicesB.size(); i++) {
-				_indices[i] = indicesB.get(i);
-			}
+			vs.trimToSize();
+			ns.trimToSize();
+			tc.trimToSize();
+			vertIndex.trimToSize();
+			normalIndex.trimToSize();
+			texIndex.trimToSize();
 			
 			return 1;
 			
@@ -187,47 +127,76 @@ public class Object3D {
 		}
 	}
 	
-	public void loadFaceTexture(StringTokenizer t){
+	public void loadFace(StringTokenizer t, String symbol){
 		String fFace;
 		StringTokenizer ft;
 		for (int j = 0; j < 3; j++) 
 		{
 			fFace = t.nextToken();
 			// another tokenizer - based on /
-			ft = new StringTokenizer(fFace, "/");
+			ft = new StringTokenizer(fFace, symbol);
+			
 			vertIndex.add(Integer.parseInt(ft.nextToken()) - 1); 
-			texIndex.add(Integer.parseInt(ft.nextToken()) - 1);
+			if(symbol.equals("//"))
+			{
+				texIndex.add(0);
+			}
+			else
+			{
+				texIndex.add(Integer.parseInt(ft.nextToken()) - 1);
+			}
 			normalIndex.add(Integer.parseInt(ft.nextToken()) - 1);
-			
-			// Add to the index buffer
-			indicesB.add(index++);
-			
-		}
-				
-	}
-	
-	public void loadFaceNoTexture(StringTokenizer t){
-		String fFace;
-		StringTokenizer ft;
-		for (int j = 0; j < 3; j++) 
-		{
-			fFace = t.nextToken();
-			// another tokenizer - based on /
-			ft = new StringTokenizer(fFace, "//");
-			vertIndex.add(Integer.parseInt(ft.nextToken()) - 1); 
-			texIndex.add(0);
-			normalIndex.add(Integer.parseInt(ft.nextToken()) - 1);
-			
-			// Add to the index buffer
-			indicesB.add(index++);
-								
+						
 		}
 		
+		//If there's no texture add random value
 		if(tc.isEmpty())
 		{
 			tc.add((float) 1.0); 	// u
 			tc.add((float) 1.0);	// v
 		}
+				
+	}
+	
+	private void readVerticesBasedIndex(){
+		
+		int totalNumberVertices = vertIndex.size();
+		//vertex + normals + textures number of coordinates
+		int numberOfElements = 3 + 3 + 2;
+		_vertices = new float[totalNumberVertices*numberOfElements];
+		
+		for (int i =0; i< totalNumberVertices;i++)
+		{
+			// Add all the vertex info
+			_vertices[i*numberOfElements] = vs.get(vertIndex.get(i) * 3);
+			_vertices[i*numberOfElements + 1] = vs.get(vertIndex.get(i) * 3 + 1);
+			_vertices[i*numberOfElements + 2] = vs.get(vertIndex.get(i) * 3 + 2);
+			
+			// add the normal info
+			_vertices[i*numberOfElements + 3] = -ns.get(normalIndex.get(i) * 3);
+			_vertices[i*numberOfElements + 4] = -ns.get(normalIndex.get(i) * 3 + 1);
+			_vertices[i*numberOfElements + 5] = -ns.get(normalIndex.get(i) * 3 + 2);
+							
+			// add the tex coord info
+			_vertices[i*numberOfElements + 6] = tc.get(texIndex.get(i) * 2);
+			_vertices[i*numberOfElements + 7] = tc.get(texIndex.get(i) * 2 + 1);				
+		}
+								
+		
+		Log.d("COMPLETED TRANSFER:", "VERTICES: " + vs.size() + "INDEXES: " + vertIndex.size() + "TRIANGLES " + 
+				vertIndex.size()/3);
+		
+	}
+	
+	private void createBuffer()
+	{
+		// Generate your vertex, normal and index buffers
+		// vertex buffer
+		vertexBuffer = ByteBuffer.allocateDirect(_vertices.length
+				* FLOAT_SIZE_BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+		vertexBuffer.put(_vertices);
+		vertexBuffer.position(0);
+		
 	}
 	
 	public Texture getTexture(){
@@ -235,27 +204,17 @@ public class Object3D {
 	}
 	
 
-	public float[] get_vertices() {
-		return _vertices;
-	}
-
-	public void set_vertices(float[] _vertices) {
-		this._vertices = _vertices;
-	}
-	public short[] get_indices() {
-		return _indices;
-	}
-
-	public FloatBuffer get_vb() {
-		return this._vb;
+	public int getTotalNumberVertices() {
+		return vertIndex.size();
 	}
 	
-	public FloatBuffer get_nb() {
-		return this._nb;
+	public int getNumberPolygons(){
+		return vertIndex.size()/3;
 	}
-	
-	public ShortBuffer get_ib() {
-		return this._ib;
+
+	public FloatBuffer getVertexBuffer() {
+		return this.vertexBuffer;
 	}
+		
 
 }

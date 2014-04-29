@@ -1,10 +1,12 @@
 package opengles.android;
 
+import java.util.ArrayList;
+
 import android.graphics.Bitmap;
 
 public class Resources {
 
-	Object3D[] _objects;
+	ArrayList<Object3D> objects;
 	Bitmap[] reflectText;
 	Bitmap[] cubeMapText;
 	Bitmap[] simpleTexts;
@@ -20,12 +22,12 @@ public class Resources {
 	      return instance;
 	   }
 	
-	public void setObjects(Object3D[] _objects){
-		this._objects = _objects;
+	public void setObjects(ArrayList<Object3D> objects){
+		this.objects = objects;
 	}
 	
-	public Object3D[] getObjects(){
-		return this._objects;
+	public ArrayList<Object3D> getObjects(){
+		return this.objects;
 	}
 	
 }

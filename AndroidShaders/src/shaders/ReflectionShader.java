@@ -10,6 +10,7 @@ import android.os.Build;
 
 @TargetApi(Build.VERSION_CODES.FROYO) public class ReflectionShader extends Shader{
 	private static final int FLOAT_SIZE_BYTES = 4;
+	private static final int TRIANGLE_VERTICES_DATA_NOR_OFFSET = 3;
 	private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 8 * FLOAT_SIZE_BYTES;
 	private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET = 0;
 	private int sTextureAddr;
@@ -28,6 +29,7 @@ import android.os.Build;
 	public void initShaderParams(@SuppressWarnings("rawtypes") Hashtable params)
 	{
 		GLES20.glUniformMatrix4fv(uMVPMatrix, 1, false, (float[]) params.get("mMVPMatrix"), 0);	
+		((FloatBuffer) params.get("vertex buffer")).position(TRIANGLE_VERTICES_DATA_NOR_OFFSET);
 		GLES20.glVertexAttribPointer(aNormalAddr, 3, GLES20.GL_FLOAT, false,
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, ((FloatBuffer) params.get("vertex buffer")));
 		GLES20.glEnableVertexAttribArray(aNormalAddr);
@@ -41,7 +43,7 @@ import android.os.Build;
 		((FloatBuffer) params.get("vertex buffer")).position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
 		GLES20.glVertexAttribPointer(aPositionAddr, 3, GLES20.GL_FLOAT, false,
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, ((FloatBuffer) params.get("vertex buffer")));
-		GLES20.glEnableVertexAttribArray(GLES20.glGetAttribLocation(_program, "aPosition"));
+		GLES20.glEnableVertexAttribArray(aPositionAddr);
 	}
 
 	public void getParamsLocations() {

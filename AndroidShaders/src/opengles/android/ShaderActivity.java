@@ -4,6 +4,7 @@ import graphics.shaders.R;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ConfigurationInfo;
 import android.graphics.drawable.Drawable;
 import android.opengl.GLSurfaceView;
@@ -19,6 +20,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 public class ShaderActivity extends Activity {
 	@Override
@@ -41,7 +43,7 @@ public class ShaderActivity extends Activity {
 			mGLSurfaceView.setEGLContextClientVersion(2);
 	        renderer = new Renderer(this);
 			mGLSurfaceView.setRenderer(renderer);
-			
+			LAST_POLYGON = renderer.getLastPolygon();
 		} 
 		else { 
 			this.finish();
@@ -50,6 +52,7 @@ public class ShaderActivity extends Activity {
 		// set the content view
 		setContentView(mGLSurfaceView);
 		createButtons(width,height,this);
+		createText(width,height,this);
 		
 	}
 
@@ -98,6 +101,7 @@ public class ShaderActivity extends Activity {
 			    else if (event.getAction() == MotionEvent.ACTION_UP) {
 			    	add.setBackground(draw_add);
 			    	addPolygons();	
+			    	numberPolygons.setText("NUMBER POLYGONS: " + renderer.getObject().getNumberPolygons());
 			    	timer.restartTimer();
 			    }
 
@@ -115,6 +119,7 @@ public class ShaderActivity extends Activity {
 			    else if (event.getAction() == MotionEvent.ACTION_UP) {
 			    	dec.setBackground(draw_dec);
 			    	decPolygons();	
+			    	numberPolygons.setText("NUMBER POLYGONS: " + renderer.getObject().getNumberPolygons());
 			    	timer.restartTimer();
 			    }
 
@@ -146,22 +151,83 @@ public class ShaderActivity extends Activity {
 
 	}
 	
+	
+	private void createText(int width, int height, Context context){
+		numberPolygons = new TextView(this);
+		numberPolygons.setText("NUMBER POLYGONS: " + renderer.getObject().getNumberPolygons());
+		addContentView(numberPolygons, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+	}
+
+	
 	public void addPolygons(){
 		
+		Intent myIntent = getIntent(); // gets the previously created intent
+    	String moreObj = myIntent.getStringExtra("Splash Activity");     	
+    	
 		if(CURRENT_POLYGON < LAST_POLYGON)
 		{
 			CURRENT_POLYGON++;
 			renderer.setObject(CURRENT_POLYGON);
+		} 
+		else if(moreObj.equals("Load obj"))
+		{
+			//Change Activity
+            Intent i=new Intent(getBaseContext(),SplashActivity.class);
+            i.putExtra("Shader Activity","Load more obj - 50000/60000");
+            startActivity(i);
+            finish();
+		} 
+		else if(moreObj.equals("Load more obj - 50000/60000"))
+		{
+			//Change Activity
+            Intent i=new Intent(getBaseContext(),SplashActivity.class);
+            i.putExtra("Shader Activity","Load more obj - 80000");
+            startActivity(i);
+            finish();
+		}
+		else if(moreObj.equals("Load more obj - 80000"))
+		{
+			//Change Activity
+            Intent i=new Intent(getBaseContext(),SplashActivity.class);
+            i.putExtra("Shader Activity","Load more obj - 100000");
+            startActivity(i);
+            finish();
 		}
 		
 	}
 	
 public void decPolygons(){
-		
+		Intent myIntent = getIntent(); // gets the previously created intent
+		String moreObj = myIntent.getStringExtra("Splash Activity");  
+	
 		if(CURRENT_POLYGON > FIRST_POLYGON)
 		{
 			CURRENT_POLYGON--;
 			renderer.setObject(CURRENT_POLYGON);
+		}
+		else if(moreObj.equals("Load more obj - 100000"))
+		{
+			//Change Activity
+            Intent i=new Intent(getBaseContext(),SplashActivity.class);
+            i.putExtra("Shader Activity","Load more obj - 80000");
+            startActivity(i);
+            finish();
+		}
+		else if(moreObj.equals("Load more obj - 80000"))
+		{
+			//Change Activity
+            Intent i=new Intent(getBaseContext(),SplashActivity.class);
+            i.putExtra("Shader Activity","Load more obj - 50000/60000");
+            startActivity(i);
+            finish();
+		} else if(moreObj.equals("Load more obj - 50000/60000"))
+		{
+			//Change Activity
+            Intent i=new Intent(getBaseContext(),SplashActivity.class);
+            i.putExtra("Shader Activity","Load more obj");
+            startActivity(i);
+            finish();
 		}
 		
 	}
@@ -195,6 +261,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.setActivated(RANDCOLOR_SHADER, false);
 			timer.restartTimer();
 			return true;
 		case R.id.phong: 			// Phong Shading
@@ -207,6 +274,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.setActivated(RANDCOLOR_SHADER, false);
 			timer.restartTimer();
 			return true;
 		case R.id.flat:
@@ -219,6 +287,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.setActivated(RANDCOLOR_SHADER, false);
 			timer.restartTimer();
 			return true;
 		case R.id.red:
@@ -231,6 +300,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.setActivated(RANDCOLOR_SHADER, false);
 			timer.restartTimer();
 			return true;
 		case R.id.toon:
@@ -243,6 +313,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.setActivated(RANDCOLOR_SHADER, false);
 			timer.restartTimer();
 			return true;
 		case R.id.cubemap:
@@ -255,6 +326,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, true);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.setActivated(RANDCOLOR_SHADER, false);
 			timer.restartTimer();
 			return true;
 		case R.id.reflection:
@@ -267,6 +339,7 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, true);
 			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.setActivated(RANDCOLOR_SHADER, false);
 			timer.restartTimer();
 			return true;
 		case R.id.simpletex:
@@ -279,6 +352,20 @@ public void decPolygons(){
 			renderer.setActivated(CUBEMAP_SHADER, false);
 			renderer.setActivated(REFLECTION_SHADER, false);
 			renderer.setActivated(TEXTURE_SHADER, true);
+			renderer.setActivated(RANDCOLOR_SHADER, false);
+			timer.restartTimer();
+			return true;
+		case R.id.randc:
+			renderer.setShader(this.RANDCOLOR_SHADER);
+			renderer.setActivated(GOURAUD_SHADER, false);
+			renderer.setActivated(PHONG_SHADER, false);
+			renderer.setActivated(TOON_SHADER, false);
+			renderer.setActivated(RED_SHADER, false);
+			renderer.setActivated(FLAT_SHADER, false);
+			renderer.setActivated(CUBEMAP_SHADER, false);
+			renderer.setActivated(REFLECTION_SHADER, false);
+			renderer.setActivated(TEXTURE_SHADER, false);
+			renderer.setActivated(RANDCOLOR_SHADER, true);
 			timer.restartTimer();
 			return true;
 		case R.id.quit:				// Quit the program
@@ -381,9 +468,10 @@ public void decPolygons(){
 	private final int CUBEMAP_SHADER = 5;
 	private final int REFLECTION_SHADER = 6;
 	private final int TEXTURE_SHADER = 7;
+	private final int RANDCOLOR_SHADER = 8;
 
 	private int CURRENT_POLYGON = 0;
-	private final int LAST_POLYGON = 4;
+	private int LAST_POLYGON;
 	private final int FIRST_POLYGON = 0;
 	
 
@@ -395,6 +483,10 @@ public void decPolygons(){
 	// pinch to zoom
 	float oldDist = 100.0f;
 	float newDist;
+	
+	TextView numberPolygons;
+	
+	boolean splashActCalled = false;
 
 	int mode = 0;
 }
